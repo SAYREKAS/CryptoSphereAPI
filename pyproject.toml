@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "cryptosphereapi"
+version = "0.1.0"
+description = ""
+authors = ["sayrekas <chaotichoice@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["all"], version = "^0.115.5"}
+sqlalchemy = "^2.0.36"
+asyncpg = "^0.30.0"
+greenlet = "^3.1.1"
+python-dotenv = "^1.0.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
