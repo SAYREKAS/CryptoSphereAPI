@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, func
+from sqlalchemy import ForeignKey, func, UniqueConstraint
 from sqlalchemy import Integer, String, Numeric, TIMESTAMP
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -27,8 +27,10 @@ class CoinsORM(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"))
 
     name: Mapped[str] = mapped_column(String(length=100), nullable=False)
-    symbol: Mapped[str] = mapped_column(String(length=10), nullable=False)
+    symbol: Mapped[str] = mapped_column(String(length=100), nullable=False)
     date_added: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+
+    __table_args__ = (UniqueConstraint("user_id", "name", "symbol", name="uix_user_coin_name_symbol"),)
 
 
 class CoinTransactionsORM(Base):
