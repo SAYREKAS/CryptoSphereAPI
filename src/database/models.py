@@ -5,8 +5,8 @@ from sqlalchemy import ForeignKey, func, UniqueConstraint
 from sqlalchemy import Integer, String, Numeric, TIMESTAMP
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from database.config import engine
-from database.triggers import update_coin_statistics
+from src.database.config import engine
+from src.database.triggers import update_coin_statistics
 
 
 class Base(DeclarativeBase):

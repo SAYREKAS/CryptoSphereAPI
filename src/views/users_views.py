@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas.api_schemas import AddUserSchema, AddUserReportSchema
+from src.schemas.api_schemas import AddUserSchema, AddUserReportSchema
 
 router = APIRouter()
 

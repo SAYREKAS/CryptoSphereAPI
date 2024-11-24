@@ -1,15 +1,16 @@
 """CRUD database operations"""
 
-import asyncpg
 import sqlalchemy
 from loguru import logger
 
-from database.config import async_session
-from schemas.api_schemas import AddUserSchema, AddCoinSchema
-from database.models import UsersORM, CoinsORM
+from src.database.config import async_session
+from src.schemas.api_schemas import AddUserSchema, AddCoinSchema
+from src.database.models import UsersORM, CoinsORM
 
 
 async def get_all_users() -> list[str]:
+    """Retrieve all register users"""
+
     async with async_session() as session:
         data = await session.execute(sqlalchemy.select(UsersORM.username))
         users = data.scalars().all()
