@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
-from views.users_views import router as users_router
+from src.views.users_views import router as users_router
 
 app = FastAPI()
 app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
