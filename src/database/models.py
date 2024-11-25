@@ -20,6 +20,9 @@ class UsersORM(Base):
     email: Mapped[str] = mapped_column(String(length=320), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
+    def __str__(self):
+        return self.username
+
 
 class CoinsORM(Base):
     __tablename__ = "coins"
@@ -31,6 +34,9 @@ class CoinsORM(Base):
     date_added: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
 
     __table_args__ = (UniqueConstraint("user_id", "name", "symbol", name="uix_user_coin_name_symbol"),)
+
+    def __str__(self):
+        return self.name + " " + self.symbol
 
 
 class CoinTransactionsORM(Base):

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.schemas.api_schemas import AddUserSchema, AddUserReportSchema
+from src.schemas.api_schemas import UserSchema, AddUserReportSchema
 
 router = APIRouter()
 
@@ -11,5 +11,5 @@ def get_users():
 
 
 @router.post("/")
-async def create_user(user: AddUserSchema) -> AddUserReportSchema:
+async def create_user(user: UserSchema) -> AddUserReportSchema:
     return AddUserReportSchema(success=True if user else False)

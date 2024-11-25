@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
 
-class AddUserSchema(BaseModel):
+class UserSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
@@ -26,7 +26,7 @@ class AddUserSchema(BaseModel):
         return value
 
 
-class AddCoinSchema(BaseModel):
+class CoinSchema(BaseModel):
     username: str
     coin_name: str
     coin_symbol: str
