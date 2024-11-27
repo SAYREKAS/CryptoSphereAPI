@@ -1,3 +1,5 @@
+"""Models for interaction with the database"""
+
 import asyncio
 from datetime import datetime
 
@@ -16,7 +18,7 @@ class Base(DeclarativeBase):
 class UsersORM(Base):
     __tablename__ = "users"
 
-    username: Mapped[str] = mapped_column(String(length=50), nullable=False, unique=True)
+    username: Mapped[str] = mapped_column(String(length=50), nullable=False, unique=True, index=True)
     email: Mapped[str] = mapped_column(String(length=320), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
@@ -27,10 +29,10 @@ class UsersORM(Base):
 class CoinsORM(Base):
     __tablename__ = "coins"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), index=True)
 
-    name: Mapped[str] = mapped_column(String(length=100), nullable=False)
-    symbol: Mapped[str] = mapped_column(String(length=100), nullable=False)
+    name: Mapped[str] = mapped_column(String(length=100), nullable=False, index=True)
+    symbol: Mapped[str] = mapped_column(String(length=100), nullable=False, index=True)
     date_added: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
 
     __table_args__ = (UniqueConstraint("user_id", "name", "symbol", name="uix_user_coin_name_symbol"),)
