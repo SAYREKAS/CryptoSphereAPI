@@ -4,13 +4,10 @@ from fastapi import FastAPI
 from src.views.users_views import router as users_router
 
 app = FastAPI()
-app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+API_VERSION = "/api/v1"
+app.include_router(users_router, prefix=API_VERSION + "/users", tags=["Users"])
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run("app:app", reload=True)

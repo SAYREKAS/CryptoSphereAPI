@@ -1,16 +1,16 @@
 """Schemas for API"""
 
 import hashlib
-from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
 
 
-class UserCredentialsSchema(BaseModel):
+class UserSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
 
+    @classmethod
     @field_validator("username", mode="after")
     def username_validator(cls, value: str):
         """validate username"""
@@ -18,6 +18,7 @@ class UserCredentialsSchema(BaseModel):
         value = value.strip().lower()
         return value
 
+    @classmethod
     @field_validator("password", mode="after")
     def password_validator(cls, value: str):
         """validate password"""
@@ -31,6 +32,7 @@ class UserCoinSchema(BaseModel):
     coin_name: str
     coin_symbol: str
 
+    @classmethod
     @field_validator("username", mode="after")
     def username_validator(cls, value: str):
         """validate username"""
@@ -38,6 +40,7 @@ class UserCoinSchema(BaseModel):
         value = value.strip().lower()
         return value
 
+    @classmethod
     @field_validator("coin_name", mode="after")
     def coin_name_validator(cls, value: str):
         """validate coin_name"""
@@ -45,6 +48,7 @@ class UserCoinSchema(BaseModel):
         value = value.strip()
         return value
 
+    @classmethod
     @field_validator("coin_symbol", mode="after")
     def coin_symbol_validator(cls, value: str):
         """validate coin symbol"""

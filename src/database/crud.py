@@ -7,10 +7,10 @@ from src.database.config import async_session
 from src.database.models import UsersORM, CoinsORM
 from src.schemas.common_schemas import ActionResult
 from src.schemas.crud_schemas import CoinBasicInfoSchema
-from src.schemas.api_schemas import UserCredentialsSchema, UserCoinSchema
+from src.schemas.api_schemas import UserSchema, UserCoinSchema
 
 
-async def add_new_user(user: UserCredentialsSchema) -> ActionResult:
+async def add_new_user(user: UserSchema) -> ActionResult:
     """Add a new user to the database."""
 
     async with async_session() as session:
