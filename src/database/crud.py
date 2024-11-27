@@ -16,24 +16,27 @@ async def add_new_user(user: UserCredentialsSchema) -> ActionResult:
     async with async_session() as session:
         try:
             new_user = UsersORM(**user.model_dump())
-
             session.add(new_user)
             await session.commit()
-            logger.info(f"Added new user {user.username} to database")
-            return ActionResult(success=True, message=f"Added new user {user.username} to database")
-
+            logger.info(f"New user '{user.username}' successfully added to the database.")
+            return ActionResult(success=True, message=f"User '{user.username}' was successfully registered.")
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(str(e))
-            return ActionResult(success=False, message=f"User {user.username} already exists or other integrity issue.")
+            logger.error(f"Integrity error while adding user '{user.username}': {e}")
+            return ActionResult(success=False, message=f"User '{user.username}' already exists or invalid data.")
 
 
 async def get_all_users() -> list[str]:
-    """Retrieve all register users"""
+    """Retrieve all registered users."""
 
     async with async_session() as session:
-        users_query = await session.execute(sqlalchemy.select(UsersORM.username))
-        users = users_query.scalars().all()
-        return users
+        try:
+            users_query = await session.execute(sqlalchemy.select(UsersORM.username))
+            users = users_query.scalars().all()
+            logger.info(f"Retrieved {len(users)} users from the database.")
+            return users
+        except Exception as e:
+            logger.error(f"Error retrieving user list: {e}")
+            return []
 
 
 async def delete_user(username: str) -> ActionResult:
@@ -45,17 +48,16 @@ async def delete_user(username: str) -> ActionResult:
             user = user_query.scalar_one_or_none()
 
             if not user:
-                logger.error(f"User {username} not found.")
-                return ActionResult(success=False, message=f"User {username} not found.")
+                logger.warning(f"Attempted to delete non-existent user '{username}'.")
+                return ActionResult(success=False, message=f"User '{username}' does not exist.")
 
             await session.delete(user)
             await session.commit()
-            logger.info(f"Deleted user {username} from database")
-            return ActionResult(success=True, message=f"Deleted user {username} from database")
-
+            logger.info(f"User '{username}' successfully deleted from the database.")
+            return ActionResult(success=True, message=f"User '{username}' was successfully deleted.")
         except Exception as e:
-            logger.error(f"Failed to delete user {username}: {e}")
-            return ActionResult(success=False, message=f"Failed to delete user {username}")
+            logger.error(f"Error while deleting user '{username}': {e}")
+            return ActionResult(success=False, message=f"An error occurred while deleting user '{username}'.")
 
 
 async def add_coin_for_user(coin_data: UserCoinSchema) -> ActionResult:
@@ -69,20 +71,28 @@ async def add_coin_for_user(coin_data: UserCoinSchema) -> ActionResult:
             user = result_query.scalar_one_or_none()
 
             if not user:
-                logger.error(f"User {coin_data.username} not found.")
-                return ActionResult(success=False, message=f"User {coin_data.username} not found.")
+                logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
+                return ActionResult(success=False, message=f"User '{coin_data.username}' does not exist.")
 
             coin_query = CoinsORM(user_id=user.id, name=coin_data.coin_name, symbol=coin_data.coin_symbol)
             session.add(coin_query)
             await session.commit()
 
-            logger.info(f"Added new coin {coin_data.coin_name} ({coin_data.coin_symbol}) for user {coin_data.username}")
+            logger.info(
+                f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'."
+            )
             return ActionResult(
-                success=True, message=f"Added new coin {coin_data.coin_name} for user {coin_data.username}"
+                success=True,
+                message=f"Coin '{coin_data.coin_name}' was successfully added for user '{coin_data.username}'.",
             )
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(f"Failed to add coin {coin_data.coin_name}: {e}")
-            return ActionResult(success=False, message=f"Failed to add coin {coin_data.coin_name}")
+            logger.error(
+                f"Integrity error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
+            )
+            return ActionResult(
+                success=False,
+                message=f"Could not add coin '{coin_data.coin_name}'. Possible duplicate or invalid data.",
+            )
 
 
 async def get_all_coins_for_user(username: str) -> list[CoinBasicInfoSchema]:
@@ -94,19 +104,20 @@ async def get_all_coins_for_user(username: str) -> list[CoinBasicInfoSchema]:
             user = user_query.scalar_one_or_none()
 
             if not user:
-                logger.error(f"User {username} not found.")
+                logger.warning(f"Attempted to retrieve coins for non-existent user '{username}'.")
                 return []
 
             coins_query = await session.execute(sqlalchemy.select(CoinsORM).where(CoinsORM.user_id == user.id))
             all_coins = coins_query.scalars().all()
+            logger.info(f"Retrieved {len(all_coins)} coins for user '{username}'.")
             return [CoinBasicInfoSchema(name=coin.name, symbol=coin.symbol) for coin in all_coins]
-
         except Exception as e:
-            logger.error(f"Failed to get all coins for user {username}: {e}")
+            logger.error(f"Error retrieving coins for user '{username}': {e}")
+            return []
 
 
 async def delete_coin_for_user(coin_data: UserCoinSchema) -> ActionResult:
-    """Removes the user's coin from the database."""
+    """Remove a user's coin from the database."""
 
     async with async_session() as session:
         try:
@@ -116,8 +127,8 @@ async def delete_coin_for_user(coin_data: UserCoinSchema) -> ActionResult:
             user = user_query.scalar_one_or_none()
 
             if not user:
-                logger.error(f"User {coin_data.username} not found.")
-                return ActionResult(success=False, message=f"User {coin_data.username} not found.")
+                logger.warning(f"Attempted to delete coin for non-existent user '{coin_data.username}'.")
+                return ActionResult(success=False, message=f"User '{coin_data.username}' does not exist.")
 
             coin_query = await session.execute(
                 sqlalchemy.select(CoinsORM).where(
@@ -129,25 +140,29 @@ async def delete_coin_for_user(coin_data: UserCoinSchema) -> ActionResult:
             coin = coin_query.scalar_one_or_none()
 
             if not coin:
-                logger.error(
-                    f"Coin {coin_data.coin_name} ({coin_data.coin_symbol}) not found for user {coin_data.username}."
+                logger.warning(
+                    f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) not found for user '{coin_data.username}'."
                 )
                 return ActionResult(
                     success=False,
-                    message=f"Coin {coin_data.coin_name} ({coin_data.coin_symbol}) not found for user {coin_data.username}.",
+                    message=f"Coin '{coin_data.coin_name}' not found for user '{coin_data.username}'.",
                 )
 
             await session.delete(coin)
             await session.commit()
 
             logger.info(
-                f"Coin {coin_data.coin_name} ({coin_data.coin_symbol}) successfully deleted for user {coin_data.username}."
+                f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully deleted for user '{coin_data.username}'."
             )
             return ActionResult(
                 success=True,
-                message=f"Coin {coin_data.coin_name} ({coin_data.coin_symbol}) successfully deleted for user {coin_data.username}.",
+                message=f"Coin '{coin_data.coin_name}' was successfully deleted for user '{coin_data.username}'.",
             )
-
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(f"Integrity error while deleting coin for user {coin_data.username}: {e}")
-            return ActionResult(success=False, message=f"Error while deleting coin for user {coin_data.username}")
+            logger.error(
+                f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
+            )
+            return ActionResult(
+                success=False,
+                message=f"An error occurred while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}'.",
+            )
