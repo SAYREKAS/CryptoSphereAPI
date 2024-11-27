@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
 
-class UserSchema(BaseModel):
+class UserCredentialsSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
@@ -26,7 +26,7 @@ class UserSchema(BaseModel):
         return value
 
 
-class CoinSchema(BaseModel):
+class UserCoinSchema(BaseModel):
     username: str
     coin_name: str
     coin_symbol: str
@@ -40,19 +40,14 @@ class CoinSchema(BaseModel):
 
     @field_validator("coin_name", mode="after")
     def coin_name_validator(cls, value: str):
-        """validate password"""
+        """validate coin_name"""
 
         value = value.strip()
         return value
 
     @field_validator("coin_symbol", mode="after")
     def coin_symbol_validator(cls, value: str):
-        """validate password"""
+        """validate coin symbol"""
 
         value = value.strip().upper()
         return value
-
-
-class AddUserReportSchema(BaseModel):
-    success: bool = False
-    error_message: Optional[str | None] = None
