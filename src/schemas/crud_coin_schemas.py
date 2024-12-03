@@ -1,5 +1,7 @@
 from pydantic import BaseModel, field_validator
 
+from src.schemas.common_schemas import ActionResult
+
 
 class NewUserCoinSchema(BaseModel):
     username: str
@@ -17,7 +19,7 @@ class NewUserCoinSchema(BaseModel):
     def coin_name_validator(cls, value: str):
         """validate coin_name"""
 
-        value = value.strip()
+        value = value.capitalize().strip()
         return value
 
     @field_validator("coin_symbol", mode="after")
@@ -26,3 +28,12 @@ class NewUserCoinSchema(BaseModel):
 
         value = value.strip().upper()
         return value
+
+
+class CoinInfoSchema(ActionResult):
+    coin_name: str
+    coin_symbol: str
+
+
+class AllUserCoinsSchema(BaseModel):
+    coins: list[str]

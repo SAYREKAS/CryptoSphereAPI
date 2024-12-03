@@ -1,7 +1,6 @@
 import hashlib
 
 from pydantic import BaseModel, EmailStr, field_validator
-from typing import List
 
 from src.schemas.common_schemas import ActionResult
 
@@ -25,7 +24,7 @@ class NewUserInfoSchema(BaseModel):
 
 
 class AllUsersSchema(BaseModel):
-    users: List[str]
+    users: list[str]
 
 
 class DeleteUserResultSchema(ActionResult):
