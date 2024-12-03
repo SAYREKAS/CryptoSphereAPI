@@ -17,7 +17,8 @@ async def create_user(user_data: NewUserInfoSchema) -> UserInfoSchema:
             session.add(new_user)
             await session.commit()
 
-            logger.info(f"User creation successful: '{user_data.username}' (email: {user_data.email}).")
+            logger.info(f"User creation successful: username='{user_data.username}', email='{user_data.email}'.")
+
             return UserInfoSchema(
                 success=True,
                 message=f"Your account '{user_data.username}' has been successfully created.",
@@ -26,7 +27,8 @@ async def create_user(user_data: NewUserInfoSchema) -> UserInfoSchema:
             )
 
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(f"User creation failed due to integrity error for '{user_data.username}': {e}")
+            logger.error(f"Integrity error while creating user '{user_data.username}': {e}")
+
             return UserInfoSchema(
                 success=False,
                 message="There was a problem creating your account. Please ensure your username and email are unique.",
@@ -43,11 +45,13 @@ async def read_all_users() -> AllUsersSchema:
             users_query = await session.execute(sqlalchemy.select(UsersORM.username))
             users = users_query.scalars().all()
 
-            logger.info(f"Retrieved {len(users)} users from the database.")
+            logger.info(f"Successfully retrieved {len(users)} users from the database.")
+
             return AllUsersSchema(users=users)
 
         except Exception as e:
-            logger.error(f"Error retrieving user list: {e}")
+            logger.error(f"Unexpected error while retrieving user list: {e}")
+
             return AllUsersSchema(users=[])
 
 
@@ -59,10 +63,15 @@ async def read_user_by_username(username: str) -> UserInfoSchema:
 
         user = user_query.scalar_one_or_none()
         if not user:
+            logger.warning(f"User '{username}' not found in the database.")
+
             return UserInfoSchema(
                 success=False,
                 message=f"User '{username}' not found.",
             )
+
+        logger.info(f"User '{username}' successfully retrieved from the database.")
+
         return UserInfoSchema(
             success=True,
             message=f"User '{username}' found.",
@@ -80,6 +89,7 @@ async def delete_user_by_username(username: str) -> DeleteUserResultSchema:
 
             if result.rowcount == 0:
                 logger.warning(f"Attempted to delete non-existent user '{username}'.")
+
                 return DeleteUserResultSchema(
                     success=False,
                     message=f"User '{username}' not found.",
@@ -87,7 +97,9 @@ async def delete_user_by_username(username: str) -> DeleteUserResultSchema:
                 )
 
             await session.commit()
+
             logger.info(f"User '{username}' successfully deleted from the database.")
+
             return DeleteUserResultSchema(
                 success=True,
                 message=f"User '{username}' successfully deleted from the database.",
@@ -96,3 +108,9 @@ async def delete_user_by_username(username: str) -> DeleteUserResultSchema:
 
         except Exception as e:
             logger.error(f"Error while deleting user '{username}': {e}")
+
+            return DeleteUserResultSchema(
+                success=False,
+                message="An unexpected error occurred while deleting the user. Please try again later.",
+                username=username,
+            )
