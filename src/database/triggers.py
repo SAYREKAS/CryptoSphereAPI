@@ -11,25 +11,46 @@ CREATE OR REPLACE FUNCTION update_coin_statistics()
 $$
 BEGIN
     UPDATE "coin_statistics"
-    SET total_buy         = COALESCE(total_buy, 0) + COALESCE(NEW.buy, 0),
-        total_sell        = COALESCE(total_sell, 0) + COALESCE(NEW.sell, 0),
-        total_invested    = COALESCE(total_invested, 0) + COALESCE(NEW.buy, 0) * NEW.usd,
-        total_realized    = COALESCE(total_realized, 0) + COALESCE(NEW.sell, 0) * NEW.usd,
+    SET total_buy          = COALESCE(total_buy, 0) + COALESCE(NEW.buy, 0),
+        total_sell         = COALESCE(total_sell, 0) + COALESCE(NEW.sell, 0),
+        total_invested     = COALESCE(total_invested, 0) + COALESCE(NEW.buy, 0) * NEW.usd,
+        total_realized     = COALESCE(total_realized, 0) + COALESCE(NEW.sell, 0) * NEW.usd,
+        total_invested_avg = CASE 
+                                WHEN COALESCE(total_buy, 0) + COALESCE(NEW.buy, 0) > 0 
+                                THEN (COALESCE(total_invested, 0) + COALESCE(NEW.buy, 0) * NEW.usd) /
+                                     (COALESCE(total_buy, 0) + COALESCE(NEW.buy, 0))
+                                ELSE 0
+                             END,
+        total_realized_avg = CASE 
+                                WHEN COALESCE(total_sell, 0) + COALESCE(NEW.sell, 0) > 0 
+                                THEN (COALESCE(total_realized, 0) + COALESCE(NEW.sell, 0) * NEW.usd) /
+                                       (COALESCE(total_sell, 0) + COALESCE(NEW.sell, 0))
+                                 ELSE 0
+                             END,
         holdings          = COALESCE(holdings, 0) + (COALESCE(NEW.buy, 0) - COALESCE(NEW.sell, 0)),
-        transaction_count = transaction_count + 1,
+        transaction_count = COALESCE(transaction_count, 0) + 1,
         last_updated      = NOW()
     WHERE coin_id = NEW.coin_id
       AND user_id = NEW.user_id;
 
     IF NOT FOUND THEN
         INSERT INTO "coin_statistics" (user_id, coin_id, total_buy, total_sell, total_invested, 
-                                        total_realized, holdings, transaction_count, last_updated)
+                                        total_realized, total_invested_avg, total_realized_avg, holdings, 
+                                        transaction_count, last_updated)
         VALUES (NEW.user_id,
                 NEW.coin_id,
                 COALESCE(NEW.buy, 0),
                 COALESCE(NEW.sell, 0),
                 COALESCE(NEW.buy, 0) * NEW.usd,
                 COALESCE(NEW.sell, 0) * NEW.usd,
+                CASE 
+                    WHEN COALESCE(NEW.buy, 0) > 0 THEN NEW.usd
+                    ELSE 0
+                END,
+                CASE 
+                    WHEN COALESCE(NEW.sell, 0) > 0 THEN NEW.usd
+                    ELSE 0
+                END,
                 COALESCE(NEW.buy, 0) - COALESCE(NEW.sell, 0),
                 1,
                 NOW());
@@ -42,7 +63,6 @@ $$ LANGUAGE plpgsql;
         )
     )
 
-    # Створення тригера
     await session.execute(
         text(
             """
