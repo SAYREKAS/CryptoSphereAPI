@@ -18,7 +18,7 @@ class UserActionCoinSchema(BaseModel):
     @field_validator("coin_name", mode="after")
     def coin_name_validator(cls, value: str) -> str:
         """Validate coin name."""
-        return value.capitalize().strip()
+        return value.strip().title()
 
     @field_validator("coin_symbol", mode="after")
     def coin_symbol_validator(cls, value: str) -> str:

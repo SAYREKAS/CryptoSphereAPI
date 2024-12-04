@@ -10,6 +10,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from src.database.config import engine
 from src.database.triggers import update_coin_statistics
 
+CUSTOM_NUMERIC = Numeric(25, 10)
+
 
 class Base(DeclarativeBase):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, unique=True, nullable=False)
@@ -21,6 +23,8 @@ class UsersORM(Base):
     username: Mapped[str] = mapped_column(String(length=50), nullable=False, unique=True, index=True)
     email: Mapped[str] = mapped_column(String(length=70), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(length=64), nullable=False)
+
+    registered_at: Mapped[datetime] = mapped_column(nullable=False, default=func.now())
 
     def __str__(self):
         return self.username
@@ -59,15 +63,15 @@ class CoinStatisticsORM(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), nullable=False)
     coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), nullable=False)
 
-    total_buy: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
-    total_invested: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
-    total_invested_avg: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+    total_buy: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    total_invested: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    total_invested_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
 
-    total_sell: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
-    total_realized: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
-    total_realized_avg: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+    total_sell: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    total_realized: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    total_realized_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
 
-    holdings: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+    holdings: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
     transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
     last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now())
 
