@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, status
 
-from src.database.crud.crud_user import create_user, read_all_users, delete_user_by_username, read_user_by_username
-from src.schemas.crud_user_schemas import AllUsersSchema, DeleteUserResultSchema, NewUserInfoSchema, UserInfoSchema
+from src.database.crud.users_crud import create_user, read_all_users, delete_user_by_username, read_user_by_username
+from src.schemas.crud_users_schemas import AllUsersSchema, DeleteUserResultSchema, NewUserInfoSchema, UserInfoSchema
 
 router = APIRouter()
 

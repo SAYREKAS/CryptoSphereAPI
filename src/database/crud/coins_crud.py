@@ -5,10 +5,10 @@ from loguru import logger
 
 from src.database.config import async_session
 from src.database.models import UsersORM, CoinsORM
-from src.schemas.crud_coin_schemas import NewUserCoinSchema, CoinInfoSchema, AllUserCoinsSchema
+from src.schemas.crud_coins_schemas import UserActionCoinSchema, ActionCoinSchema, UserCoinsSchema, CoinSchema
 
 
-async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
+async def add_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
     """Add a new coin for a user identified by a username."""
 
     async with async_session() as session:
@@ -21,7 +21,7 @@ async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
             if not user_id:
                 logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
 
-                return CoinInfoSchema(
+                return ActionCoinSchema(
                     success=False,
                     message=f"User '{coin_data.username}' does not exist. Please check the username and try again.",
                     coin_name=coin_data.coin_name,
@@ -36,7 +36,7 @@ async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                 f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'."
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=True,
                 message=f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'.",
                 coin_name=coin_data.coin_name,
@@ -44,11 +44,11 @@ async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
             )
 
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(
+            logger.warning(
                 f"Integrity error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=False,
                 message="There was a problem adding the coin. Please ensure the coin details are valid and try again.",
                 coin_name=coin_data.coin_name,
@@ -60,7 +60,7 @@ async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                 f"Unexpected error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=False,
                 message="An unexpected error occurred while adding the coin. Please try again later.",
                 coin_name=coin_data.coin_name,
@@ -68,7 +68,7 @@ async def add_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
             )
 
 
-async def get_all_coins_for_user(username: str) -> AllUserCoinsSchema:
+async def get_all_coins_for_user(username: str) -> UserCoinsSchema:
     """Retrieve all coins for a user identified by a username."""
 
     async with async_session() as session:
@@ -82,17 +82,19 @@ async def get_all_coins_for_user(username: str) -> AllUserCoinsSchema:
             all_coins = coins_query.scalars().all()
             if not all_coins:
                 logger.warning(f"Attempted to get all coins for user '{username}', but no coins were found.")
-                return AllUserCoinsSchema(coins=[])
+                return UserCoinsSchema(coins=[])
 
             logger.info(f"Retrieved {len(all_coins)} coins for user '{username}'.")
-            return AllUserCoinsSchema(coins=[coin.name for coin in all_coins])
+            return UserCoinsSchema(
+                coins=[CoinSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins]
+            )
 
         except Exception as e:
             logger.error(f"Error retrieving coins for user '{username}': {e}")
-            return AllUserCoinsSchema(coins=[])
+            return UserCoinsSchema(coins=[])
 
 
-async def delete_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
+async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
     """Remove a user's coin from the database."""
 
     async with async_session() as session:
@@ -113,7 +115,7 @@ async def delete_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                     f"Attempted to delete non-existent coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) for user '{coin_data.username}'."
                 )
 
-                return CoinInfoSchema(
+                return ActionCoinSchema(
                     success=False,
                     message=f"The coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) for user '{coin_data.username}' was not found.",
                     coin_name=coin_data.coin_name,
@@ -126,7 +128,7 @@ async def delete_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                 f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully deleted for user '{coin_data.username}'."
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=True,
                 message=f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully removed for user '{coin_data.username}'.",
                 coin_name=coin_data.coin_name,
@@ -138,7 +140,7 @@ async def delete_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                 f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=False,
                 message="There was a problem removing the coin. Please try again later.",
                 coin_name=coin_data.coin_name,
@@ -150,7 +152,7 @@ async def delete_coin_for_user(coin_data: NewUserCoinSchema) -> CoinInfoSchema:
                 f"Unexpected error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
 
-            return CoinInfoSchema(
+            return ActionCoinSchema(
                 success=False,
                 message="An unexpected error occurred while removing the coin. Please try again later.",
                 coin_name=coin_data.coin_name,

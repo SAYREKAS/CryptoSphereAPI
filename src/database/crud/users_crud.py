@@ -5,7 +5,7 @@ from loguru import logger
 
 from src.database.config import async_session
 from src.database.models import UsersORM
-from src.schemas.crud_user_schemas import UserInfoSchema, NewUserInfoSchema, AllUsersSchema, DeleteUserResultSchema
+from src.schemas.crud_users_schemas import UserInfoSchema, NewUserInfoSchema, AllUsersSchema, DeleteUserResultSchema
 
 
 async def create_user(user_data: NewUserInfoSchema) -> UserInfoSchema:
@@ -24,7 +24,7 @@ async def create_user(user_data: NewUserInfoSchema) -> UserInfoSchema:
                 email=user_data.email,
             )
         except sqlalchemy.exc.IntegrityError as e:
-            logger.error(f"Integrity error for user '{user_data.username}': {e}")
+            logger.warning(f"Integrity error for user '{user_data.username}': {e}")
             return UserInfoSchema(
                 success=False,
                 message="Username or email already exists.",

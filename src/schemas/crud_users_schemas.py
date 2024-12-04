@@ -1,13 +1,14 @@
 import hashlib
+from typing import List
 
-from pydantic import BaseModel, EmailStr, field_validator, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from src.schemas.common_schemas import ActionResult
 
 
 class NewUserInfoSchema(BaseModel):
-    username: str = Field(min_length=8, max_length=50)
-    email: EmailStr = Field(min_length=8, max_length=70)
+    username: str = Field(max_length=50)
+    email: EmailStr = Field(max_length=70)
     password: str = Field(min_length=8, max_length=64)
 
     @field_validator("username", mode="after")
@@ -22,7 +23,7 @@ class NewUserInfoSchema(BaseModel):
 
 
 class AllUsersSchema(BaseModel):
-    users: list[str]
+    users: List[str]
 
 
 class DeleteUserResultSchema(ActionResult):
