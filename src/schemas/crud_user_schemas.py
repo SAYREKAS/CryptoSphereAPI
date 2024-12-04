@@ -1,26 +1,24 @@
 import hashlib
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 
 from src.schemas.common_schemas import ActionResult
 
 
 class NewUserInfoSchema(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
+    username: str = Field(min_length=8, max_length=50)
+    email: EmailStr = Field(min_length=8, max_length=70)
+    password: str = Field(min_length=8, max_length=64)
 
     @field_validator("username", mode="after")
-    def username_validator(cls, value):
-        """validate username"""
-        value = value.strip().lower()
-        return value
+    def validate_username(cls, value: str) -> str:
+        """Ensure the username is lowercase and stripped of spaces."""
+        return value.strip().lower()
 
     @field_validator("password", mode="after")
-    def password_validator(cls, value):
-        """validate password"""
-        value = hashlib.sha256(value.encode()).hexdigest()
-        return value
+    def hash_password(cls, value: str) -> str:
+        """Hash the user's password using SHA-256."""
+        return hashlib.sha256(value.encode()).hexdigest()
 
 
 class AllUsersSchema(BaseModel):

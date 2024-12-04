@@ -19,7 +19,7 @@ class UsersORM(Base):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(String(length=50), nullable=False, unique=True, index=True)
-    email: Mapped[str] = mapped_column(String(length=320), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(String(length=70), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
     def __str__(self):
