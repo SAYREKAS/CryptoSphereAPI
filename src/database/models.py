@@ -60,9 +60,13 @@ class CoinStatisticsORM(Base):
     coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), nullable=False)
 
     total_buy: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
-    total_sell: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
     total_invested: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+    total_invested_avg: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+
+    total_sell: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
     total_realized: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+    total_realized_avg: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
+
     holdings: Mapped[float] = mapped_column(Numeric(25, 10), nullable=False, default=0)
     transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
     last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now())
