@@ -1,44 +1,39 @@
 """CRUD database operations"""
 
+from http.client import HTTPException
+
 import sqlalchemy
 from loguru import logger
+from fastapi import HTTPException, status
+from sqlalchemy import select, delete
 
 from src.database.config import async_session
 from src.database.models import UsersORM, CoinsORM
-from src.schemas.crud_coins_schemas import UserActionCoinSchema, ActionCoinSchema, UserCoinsSchema, CoinSchema
+from src.schemas.crud_coins_schemas import UserActionCoinSchema, CoinInfoSchema, UserCoinsSchema, CoinSchema
 
 
-async def add_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
+async def add_coin_for_user(coin_data: UserActionCoinSchema) -> CoinInfoSchema:
     """Add a new coin for a user identified by a username."""
 
     async with async_session() as session:
         try:
-            result_query = await session.execute(
-                sqlalchemy.select(UsersORM.id).where(UsersORM.username == coin_data.username)
-            )
+            query = await session.execute(select(UsersORM.id).where(UsersORM.username == coin_data.username))
 
-            user_id = result_query.scalar_one_or_none()
+            user_id = query.scalar_one_or_none()
             if not user_id:
                 logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
-
-                return ActionCoinSchema(
-                    success=False,
-                    message=f"User '{coin_data.username}' does not exist. Please check the username and try again.",
-                    coin_name=coin_data.coin_name,
-                    coin_symbol=coin_data.coin_symbol,
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"User '{coin_data.username}' not found."
                 )
 
-            coin_query = CoinsORM(user_id=user_id, name=coin_data.coin_name, symbol=coin_data.coin_symbol)
-            session.add(coin_query)
+            new_coin = CoinsORM(user_id=user_id, name=coin_data.coin_name, symbol=coin_data.coin_symbol)
+            session.add(new_coin)
             await session.commit()
 
             logger.info(
                 f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'."
             )
-
-            return ActionCoinSchema(
-                success=True,
-                message=f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'.",
+            return CoinInfoSchema(
                 coin_name=coin_data.coin_name,
                 coin_symbol=coin_data.coin_symbol,
             )
@@ -47,24 +42,17 @@ async def add_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSchema
             logger.warning(
                 f"Integrity error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
-
-            return ActionCoinSchema(
-                success=False,
-                message="There was a problem adding the coin. Please ensure the coin details are valid and try again.",
-                coin_name=coin_data.coin_name,
-                coin_symbol=coin_data.coin_symbol,
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Coin data is invalid or already exists."
             )
 
         except Exception as e:
             logger.error(
                 f"Unexpected error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
-
-            return ActionCoinSchema(
-                success=False,
-                message="An unexpected error occurred while adding the coin. Please try again later.",
-                coin_name=coin_data.coin_name,
-                coin_symbol=coin_data.coin_symbol,
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected error occurred while adding the coin.",
             )
 
 
@@ -74,9 +62,7 @@ async def get_all_coins_for_user(username: str) -> UserCoinsSchema:
     async with async_session() as session:
         try:
             coins_query = await session.execute(
-                sqlalchemy.select(CoinsORM)
-                .join(UsersORM, UsersORM.id == CoinsORM.user_id)
-                .where(UsersORM.username == username)
+                select(CoinsORM).join(UsersORM, UsersORM.id == CoinsORM.user_id).where(UsersORM.username == username)
             )
 
             all_coins = coins_query.scalars().all()
@@ -91,20 +77,21 @@ async def get_all_coins_for_user(username: str) -> UserCoinsSchema:
 
         except Exception as e:
             logger.error(f"Error retrieving coins for user '{username}': {e}")
-            return UserCoinsSchema(coins=[])
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unexpected error occurred while retrieving coins for user '{username}': {str(e)}",
+            )
 
 
-async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
+async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> CoinInfoSchema:
     """Remove a user's coin from the database."""
 
     async with async_session() as session:
         try:
-            user_id_subquery = (
-                sqlalchemy.select(UsersORM.id).where(UsersORM.username == coin_data.username).scalar_subquery()
-            )
+            user_id_subquery = select(UsersORM.id).where(UsersORM.username == coin_data.username).scalar_subquery()
 
             result = await session.execute(
-                sqlalchemy.delete(CoinsORM).where(
+                delete(CoinsORM).where(
                     CoinsORM.user_id == user_id_subquery,
                     CoinsORM.name == coin_data.coin_name,
                     CoinsORM.symbol == coin_data.coin_symbol,
@@ -114,12 +101,9 @@ async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSch
                 logger.warning(
                     f"Attempted to delete non-existent coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) for user '{coin_data.username}'."
                 )
-
-                return ActionCoinSchema(
-                    success=False,
-                    message=f"The coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) for user '{coin_data.username}' was not found.",
-                    coin_name=coin_data.coin_name,
-                    coin_symbol=coin_data.coin_symbol,
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) not found for user '{coin_data.username}'.",
                 )
 
             await session.commit()
@@ -127,10 +111,7 @@ async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSch
             logger.info(
                 f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully deleted for user '{coin_data.username}'."
             )
-
-            return ActionCoinSchema(
-                success=True,
-                message=f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully removed for user '{coin_data.username}'.",
+            return CoinInfoSchema(
                 coin_name=coin_data.coin_name,
                 coin_symbol=coin_data.coin_symbol,
             )
@@ -139,22 +120,16 @@ async def delete_coin_for_user(coin_data: UserActionCoinSchema) -> ActionCoinSch
             logger.error(
                 f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
-
-            return ActionCoinSchema(
-                success=False,
-                message="There was a problem removing the coin. Please try again later.",
-                coin_name=coin_data.coin_name,
-                coin_symbol=coin_data.coin_symbol,
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {str(e)}",
             )
 
         except Exception as e:
             logger.error(
                 f"Unexpected error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
             )
-
-            return ActionCoinSchema(
-                success=False,
-                message="An unexpected error occurred while removing the coin. Please try again later.",
-                coin_name=coin_data.coin_name,
-                coin_symbol=coin_data.coin_symbol,
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unexpected error occurred while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {str(e)}",
             )
