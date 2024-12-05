@@ -2,14 +2,14 @@
 
 from fastapi import APIRouter
 
-from src.schemas.crud_coins_schemas import UserActionCoinSchema, ActionCoinSchema, UserCoinsSchema
+from src.schemas.crud_coins_schemas import UserActionCoinSchema, CoinInfoSchema, UserCoinsSchema
 from src.database.crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
 
 router = APIRouter()
 
 
 @router.post("/")
-async def add_coin_for_user_endpoint(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
+async def add_coin_for_user_endpoint(coin_data: UserActionCoinSchema) -> CoinInfoSchema:
     """Endpoint for adding a new user's coin"""
     return await add_coin_for_user(coin_data=coin_data)
 
@@ -21,6 +21,6 @@ async def get_all_coins_for_user_endpoint(username: str) -> UserCoinsSchema:
 
 
 @router.delete("/")
-async def delete_coin_for_user_endpoint(coin_data: UserActionCoinSchema) -> ActionCoinSchema:
+async def delete_coin_for_user_endpoint(coin_data: UserActionCoinSchema) -> CoinInfoSchema:
     """Endpoint for deleting a user's coin"""
     return await delete_coin_for_user(coin_data=coin_data)

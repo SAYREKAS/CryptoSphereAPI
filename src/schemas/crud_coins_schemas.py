@@ -24,7 +24,7 @@ class UserActionCoinSchema(BaseModel):
         return value.strip().upper()
 
 
-class ActionCoinSchema(BaseModel):
+class CoinInfoSchema(BaseModel):
     coin_name: str
     coin_symbol: str
 
