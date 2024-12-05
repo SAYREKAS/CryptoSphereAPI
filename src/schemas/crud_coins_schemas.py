@@ -3,7 +3,7 @@ from typing import List
 from pydantic import BaseModel, Field, field_validator
 
 
-class UserActionCoinSchema(BaseModel):
+class UserCoinActionSchema(BaseModel):
     username: str
     coin_name: str
     coin_symbol: str
@@ -38,8 +38,12 @@ class UserCoinsSchema(BaseModel):
     coins: List[CoinSchema]
 
 
-class NewTransactionSchema(BaseModel):
-    coin_info: UserActionCoinSchema
+class CoinOperationSchema(BaseModel):
     buy: float | None = Field(ge=0, default=0)
     sell: float | None = Field(ge=0, default=0)
     usd: float | None = Field(ge=0, default=0)
+
+
+class CoinTransactionSchema(BaseModel):
+    user_coin_info: UserCoinActionSchema
+    coin_operation: CoinOperationSchema
