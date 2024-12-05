@@ -2,8 +2,6 @@ from typing import List
 
 from pydantic import BaseModel, Field, field_validator
 
-from src.schemas.common_schemas import ActionResult
-
 
 class UserActionCoinSchema(BaseModel):
     username: str
@@ -18,7 +16,7 @@ class UserActionCoinSchema(BaseModel):
     @field_validator("coin_name", mode="after")
     def coin_name_validator(cls, value: str) -> str:
         """Validate coin name."""
-        return value.strip().title()
+        return value.strip()
 
     @field_validator("coin_symbol", mode="after")
     def coin_symbol_validator(cls, value: str) -> str:
@@ -26,7 +24,7 @@ class UserActionCoinSchema(BaseModel):
         return value.strip().upper()
 
 
-class ActionCoinSchema(ActionResult):
+class ActionCoinSchema(BaseModel):
     coin_name: str
     coin_symbol: str
 

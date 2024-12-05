@@ -8,7 +8,7 @@ from sqlalchemy import Integer, String, Numeric, TIMESTAMP
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from src.database.config import engine
-from src.database.triggers import update_coin_statistics
+from src.database.triggers import coin_statistics_trigger
 
 CUSTOM_NUMERIC = Numeric(25, 10)
 
@@ -81,7 +81,7 @@ async def recreate_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-        await update_coin_statistics(conn)
+        await coin_statistics_trigger(conn)
 
 
 if __name__ == "__main__":

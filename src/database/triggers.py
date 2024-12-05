@@ -2,11 +2,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 
 
-async def update_coin_statistics(session: AsyncSession):
+async def coin_statistics_trigger(session: AsyncSession):
     await session.execute(
         text(
             """
-CREATE OR REPLACE FUNCTION update_coin_statistics()
+CREATE OR REPLACE FUNCTION coin_statistics_trigger()
     RETURNS TRIGGER AS
 $$
 BEGIN
@@ -70,7 +70,7 @@ CREATE TRIGGER after_coin_transaction
     AFTER INSERT OR UPDATE
     ON "coin_transactions"
     FOR EACH ROW
-EXECUTE FUNCTION update_coin_statistics();
+EXECUTE FUNCTION coin_statistics_trigger();
             """
         )
     )
