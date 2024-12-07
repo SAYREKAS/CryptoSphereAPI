@@ -1,6 +1,6 @@
 import re
 import hashlib
-from typing import List
+from typing import Sequence
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -77,7 +77,7 @@ class NewUserSchema(BaseModel):
 
 
 class AllUsersSchema(BaseModel):
-    users: List[str]
+    users: Sequence[str]
 
 
 class UserInfoSchema(BaseModel):
