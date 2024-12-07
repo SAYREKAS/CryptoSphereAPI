@@ -1,14 +1,10 @@
 """Models for interaction with the database"""
 
-import asyncio
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, func, UniqueConstraint
 from sqlalchemy import Integer, String, Numeric, TIMESTAMP
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-from src.database.config import engine
-from src.database.triggers import coin_statistics_trigger
 
 CUSTOM_NUMERIC = Numeric(25, 10)
 
@@ -48,20 +44,20 @@ class CoinsORM(Base):
 class CoinTransactionsORM(Base):
     __tablename__ = "coin_transactions"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"))
-    coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), index=True)
+    coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), index=True)
 
-    buy: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
-    sell: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
-    usd: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
+    buy: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+    sell: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+    usd: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
     date_added: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
 
 
 class CoinStatisticsORM(Base):
     __tablename__ = "coin_statistics"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), nullable=False)
-    coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), nullable=False, index=True)
+    coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), nullable=False, index=True)
 
     total_buy: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
     total_invested: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
@@ -74,15 +70,3 @@ class CoinStatisticsORM(Base):
     holdings: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
     transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
     last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now())
-
-
-async def recreate_tables():
-    """Видаляє та створює всі таблиці."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-        await coin_statistics_trigger(conn)
-
-
-if __name__ == "__main__":
-    asyncio.run(recreate_tables())
