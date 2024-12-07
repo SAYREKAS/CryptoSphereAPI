@@ -3,7 +3,7 @@
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.v1.crud.users_crud import create_user, read_all_users, delete_user_by_username, read_user_by_username
+from crud.users_crud import create_user, read_all_users, delete_user_by_username, read_user_by_username
 from api.schemas.crud_users_schemas import AllUsersSchema, NewUserSchema, UserInfoSchema
 from api.database.db_helper import db_helper
 
