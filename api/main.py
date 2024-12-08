@@ -23,8 +23,8 @@ async def lifespan(app: FastAPI):
 
 
 main_app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
-main_app.include_router(users_router, prefix=settings.api.v1.users_prefix, tags=["Users"])
-main_app.include_router(coins_router, prefix=settings.api.v1.coins_prefix, tags=["Coins"])
+main_app.include_router(users_router, prefix="/users", tags=["Users"])
+main_app.include_router(coins_router, prefix="/coins", tags=["Coins"])
 
 
 if __name__ == "__main__":
