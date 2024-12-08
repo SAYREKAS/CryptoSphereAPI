@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.db_helper import db_helper
 from api.schemas.crud_coins_schemas import UserCoinActionSchema, CoinInfoSchema, UserCoinsSchema
-from crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
+from api.crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
 
 router = APIRouter()
 

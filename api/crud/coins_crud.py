@@ -7,7 +7,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM, CoinsORM
-from api.schemas.crud_coins_schemas import UserCoinActionSchema, CoinInfoSchema, UserCoinsSchema, CoinSchema
+from api.schemas.crud_coins_schemas import UserCoinActionSchema, CoinInfoSchema, UserCoinsSchema
 
 
 async def add_coin_for_user(coin_data: UserCoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
@@ -61,7 +61,9 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
             return UserCoinsSchema(coins=[])
 
         logger.info(f"Retrieved {len(all_coins)} coins for user '{username}'.")
-        return UserCoinsSchema(coins=[CoinSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins])
+        return UserCoinsSchema(
+            coins=[CoinInfoSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins]
+        )
 
     except Exception as e:
         logger.error(f"Error retrieving coins for user '{username}': {e}")

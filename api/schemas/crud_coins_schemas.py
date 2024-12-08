@@ -29,16 +29,13 @@ class CoinInfoSchema(BaseModel):
     coin_symbol: str
 
 
-class CoinSchema(BaseModel):
-    coin_name: str
-    coin_symbol: str
-
-
 class UserCoinsSchema(BaseModel):
-    coins: List[CoinSchema]
+    coins: List[CoinInfoSchema]
 
 
-class CoinOperationSchema(BaseModel):
+class CoinOperationSchema(
+    BaseModel,
+):
     buy: float | None = Field(ge=0, default=0)
     sell: float | None = Field(ge=0, default=0)
     usd: float | None = Field(ge=0, default=0)

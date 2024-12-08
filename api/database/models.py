@@ -69,4 +69,4 @@ class CoinStatisticsORM(Base):
 
     holdings: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
     transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
-    last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now())
+    last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now(), onupdate=func.now())
