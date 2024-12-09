@@ -5,19 +5,20 @@ BEGIN
     UPDATE "coin_statistics"
     SET total_buy          = total_buy + NEW.buy,
         total_sell         = total_sell + NEW.sell,
-        total_invested     = total_invested + NEW.buy * NEW.usd,
-        total_realized     = total_realized + NEW.sell * NEW.usd,
+        total_invested     = total_invested + NEW.buy * NEW.average_price,
+        total_realized     = total_realized + NEW.sell * NEW.average_price,
         total_invested_avg = CASE
                                  WHEN total_buy + NEW.buy > 0
-                                     THEN (total_invested + NEW.buy * NEW.usd) / (total_buy + NEW.buy)
+                                     THEN (total_invested + NEW.buy * NEW.average_price) / (total_buy + NEW.buy)
                                  ELSE 0
             END,
         total_realized_avg = CASE
                                  WHEN total_sell + NEW.sell > 0
-                                     THEN (total_realized + NEW.sell * NEW.usd) / (total_sell + NEW.sell)
+                                     THEN (total_realized + NEW.sell * NEW.average_price) / (total_sell + NEW.sell)
                                  ELSE 0
             END,
         holdings           = holdings + NEW.buy - NEW.sell,
+        total_fee          = total_fee + NEW.fee,
         transaction_count  = transaction_count + 1,
         last_updated       = NOW()
     WHERE coin_id = NEW.coin_id
@@ -33,23 +34,25 @@ BEGIN
                                        total_invested_avg,
                                        total_realized_avg,
                                        holdings,
+                                       total_fee,
                                        transaction_count,
                                        last_updated)
         VALUES (NEW.user_id,
                 NEW.coin_id,
                 NEW.buy,
                 NEW.sell,
-                NEW.buy * NEW.usd,
-                NEW.sell * NEW.usd,
+                NEW.buy * NEW.average_price,
+                NEW.sell * NEW.average_price,
                 CASE
-                    WHEN NEW.buy > 0 THEN NEW.usd
+                    WHEN NEW.buy > 0 THEN NEW.average_price
                     ELSE 0
                     END,
                 CASE
-                    WHEN NEW.sell > 0 THEN NEW.usd
+                    WHEN NEW.sell > 0 THEN NEW.average_price
                     ELSE 0
                     END,
                 NEW.buy - NEW.sell,
+                COALESCE(NEW.fee, 0),
                 1,
                 NOW());
     END IF;
