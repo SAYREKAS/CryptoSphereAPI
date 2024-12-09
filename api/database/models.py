@@ -49,7 +49,11 @@ class CoinTransactionsORM(Base):
 
     buy: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
     sell: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
-    usd: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+
+    paid: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+    average_price: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+    fee: Mapped[float] = mapped_column(CUSTOM_NUMERIC, default=0)
+
     date_added: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
 
 
@@ -68,5 +72,7 @@ class CoinStatisticsORM(Base):
     total_realized_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
 
     holdings: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    total_fee: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
     transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
+
     last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now(), onupdate=func.now())
