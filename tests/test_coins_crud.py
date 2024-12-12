@@ -1,24 +1,15 @@
 import pytest
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.fixtures import session
-from api.crud.users_crud import create_user
-from api.schemas.users_crud_schemas import UserActionSchema
+from tests.fixtures import session, new_user
 from api.schemas.coins_crud_schemas import CoinActionSchema, UserCoinsListSchema
 from api.crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
 
 
-async def add_user_for_test(session):
-    user_data = UserActionSchema(username="testuser", email="test@example.com", password="StrongPassword12!")
-    return await create_user(user_data, session)
-
-
 @pytest.mark.asyncio
-async def test_add_coin_for_user_success(session: AsyncSession):
+async def test_add_coin_for_user_success(new_user, session):
     # Simulate user creation
-    user = await add_user_for_test(session)
-    coin_data = CoinActionSchema(username=user.username, coin_name="  bitcoin  ", coin_symbol="  BtC  ")
+    coin_data = CoinActionSchema(username=new_user.username, coin_name="  bitcoin  ", coin_symbol="  BtC  ")
     result = await add_coin_for_user(coin_data, session)
 
     assert result.coin_name == "Bitcoin"
@@ -26,7 +17,7 @@ async def test_add_coin_for_user_success(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_add_coin_for_user_user_not_found(session: AsyncSession):
+async def test_add_coin_for_user_user_not_found(new_user, session):
     coin_data = CoinActionSchema(username="nonexistentuser", coin_name="Bitcoin", coin_symbol="BTC")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -37,10 +28,9 @@ async def test_add_coin_for_user_user_not_found(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_add_coin_for_user_integrity_error(session: AsyncSession):
+async def test_add_coin_for_user_integrity_error(new_user, session):
     # Simulate user creation
-    user = await add_user_for_test(session)
-    coin_data = CoinActionSchema(username=user.username, coin_name="Bitcoin", coin_symbol="BTC")
+    coin_data = CoinActionSchema(username=new_user.username, coin_name="Bitcoin", coin_symbol="BTC")
 
     # Insert the coin once
     await add_coin_for_user(coin_data, session)
@@ -54,18 +44,17 @@ async def test_add_coin_for_user_integrity_error(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_all_coins_for_user_success(session: AsyncSession):
+async def test_get_all_coins_for_user_success(new_user, session):
     # Simulate user creation
-    user = await add_user_for_test(session)
 
-    coin_data1 = CoinActionSchema(username=user.username, coin_name="Bitcoin", coin_symbol="BTC")
-    coin_data2 = CoinActionSchema(username=user.username, coin_name="Ethereum", coin_symbol="ETH")
+    coin_data1 = CoinActionSchema(username=new_user.username, coin_name="Bitcoin", coin_symbol="BTC")
+    coin_data2 = CoinActionSchema(username=new_user.username, coin_name="Ethereum", coin_symbol="ETH")
 
     # Add coins
     await add_coin_for_user(coin_data1, session)
     await add_coin_for_user(coin_data2, session)
 
-    result = await get_all_coins_for_user(username=user.username, session=session)
+    result = await get_all_coins_for_user(username=new_user.username, session=session)
 
     assert isinstance(result, UserCoinsListSchema)
     assert len(result.coins) == 2
@@ -78,17 +67,16 @@ async def test_get_all_coins_for_user_success(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_all_coins_for_user_no_coins(session: AsyncSession):
-    user = await add_user_for_test(session)
+async def test_get_all_coins_for_user_no_coins(new_user, session):
 
-    result = await get_all_coins_for_user(username=user.username, session=session)
+    result = await get_all_coins_for_user(username=new_user.username, session=session)
 
     assert isinstance(result, UserCoinsListSchema)
     assert len(result.coins) == 0
 
 
 @pytest.mark.asyncio
-async def test_get_all_coins_for_user_user_not_found(session: AsyncSession):
+async def test_get_all_coins_for_user_user_not_found(new_user, session):
     result = await get_all_coins_for_user("nonexistentuser", session)
 
     assert isinstance(result, UserCoinsListSchema)
@@ -96,10 +84,8 @@ async def test_get_all_coins_for_user_user_not_found(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_delete_coin_for_user_success(session: AsyncSession):
-    user = await add_user_for_test(session)
-
-    coin_data = CoinActionSchema(username=user.username, coin_name="Bitcoin", coin_symbol="BTC")
+async def test_delete_coin_for_user_success(new_user, session):
+    coin_data = CoinActionSchema(username=new_user.username, coin_name="Bitcoin", coin_symbol="BTC")
 
     # Add a coin
     await add_coin_for_user(coin_data, session)
@@ -112,10 +98,9 @@ async def test_delete_coin_for_user_success(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_delete_coin_for_user_coin_not_found(session: AsyncSession):
-    user = await add_user_for_test(session)
+async def test_delete_coin_for_user_coin_not_found(new_user, session):
 
-    coin_data = CoinActionSchema(username=user.username, coin_name="Bitcoin", coin_symbol="BTC")
+    coin_data = CoinActionSchema(username=new_user.username, coin_name="Bitcoin", coin_symbol="BTC")
 
     # Try deleting a non-existent coin
     with pytest.raises(HTTPException) as exc_info:
@@ -126,7 +111,7 @@ async def test_delete_coin_for_user_coin_not_found(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_delete_coin_for_user_user_not_found(session: AsyncSession):
+async def test_delete_coin_for_user_user_not_found(session):
     coin_data = CoinActionSchema(username="nonexistentuser", coin_name="Bitcoin", coin_symbol="BTC")
 
     with pytest.raises(HTTPException) as exc_info:
