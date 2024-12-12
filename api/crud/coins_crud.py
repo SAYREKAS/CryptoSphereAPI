@@ -3,14 +3,15 @@
 import sqlalchemy
 from loguru import logger
 from fastapi import HTTPException, status
+
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM, CoinsORM
-from api.schemas.coins_crud_schemas import CoinInfoSchema, UserCoinsSchema
+from api.schemas.coins_crud_schemas import CoinActionSchema, UserCoinsListSchema, CoinInfoSchema
 
 
-async def add_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) -> CoinInfoSchema:
+async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
     """Add a new coin for a user identified by a username."""
 
     try:
@@ -25,12 +26,10 @@ async def add_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) ->
         session.add(new_coin)
         await session.commit()
 
-        logger.info(
-            f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully added for user '{coin_data.username}'."
-        )
+        logger.info(f"Coin '{new_coin.name}' ({new_coin.symbol}) successfully added for user '{coin_data.username}'.")
         return CoinInfoSchema(
-            coin_name=coin_data.coin_name,
-            coin_symbol=coin_data.coin_symbol,
+            coin_name=new_coin.name,
+            coin_symbol=new_coin.symbol,
         )
 
     except sqlalchemy.exc.IntegrityError as e:
@@ -47,7 +46,7 @@ async def add_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) ->
         )
 
 
-async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCoinsSchema:
+async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCoinsListSchema:
     """Retrieve all coins for a user identified by a username."""
 
     try:
@@ -58,10 +57,10 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
         all_coins = coins_query.scalars().all()
         if not all_coins:
             logger.warning(f"Attempted to get all coins for user '{username}', but no coins were found.")
-            return UserCoinsSchema(coins=[])
+            return UserCoinsListSchema(coins=[])
 
         logger.info(f"Retrieved {len(all_coins)} coins for user '{username}'.")
-        return UserCoinsSchema(
+        return UserCoinsListSchema(
             coins=[CoinInfoSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins]
         )
 
@@ -73,7 +72,7 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
         )
 
 
-async def delete_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) -> CoinInfoSchema:
+async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
     """Remove a user's coin from the database."""
 
     try:

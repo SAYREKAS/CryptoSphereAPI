@@ -1,34 +1,13 @@
 import hashlib
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from api.database.models import Base, UsersORM
+from api.database.models import UsersORM
 from api.schemas.users_crud_schemas import UserActionSchema
 from api.crud.users_crud import create_user, read_all_users, read_user_by_username, delete_user_by_username
-
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-
-@pytest_asyncio.fixture
-async def session():
-    """Create an in-memory database for testing."""
-    engine = create_async_engine(DATABASE_URL, future=True)
-    async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-
-    # Створення таблиць
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session() as session:
-        yield session
-
-    # Видалення таблиць
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+from tests.async_session_fixture import session
 
 
 @pytest.mark.asyncio

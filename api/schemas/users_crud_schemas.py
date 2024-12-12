@@ -54,12 +54,6 @@ class UserActionSchema(BaseModel):
         return value
 
 
-class DeleteUserSchema(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-
 class UserInfoSchema(BaseModel):
     username: str
     email: EmailStr

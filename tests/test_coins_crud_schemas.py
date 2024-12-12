@@ -1,120 +1,93 @@
 import pytest
-from api.schemas.coins_crud_schemas import UserCoinsSchema
-from api.schemas.coins_crud_schemas import CommonFieldsValidator, CoinInfoSchema, CoinOperationSchema
+from pydantic import ValidationError
+
+from api.schemas.coins_crud_schemas import CoinActionSchema
+from api.schemas.coins_crud_schemas import TransactionOperationSchema
 
 
-def test_common_fields_username_lowercase():
-    data = CommonFieldsValidator(username="TESTUSER")
+def test_username_is_stripped_and_lowercase_and_title_and_upper():
+    data = CoinActionSchema(username="  TESTUSER   ", coin_name="  bit COIN  ", coin_symbol="  BtC  ")
+
     assert data.username == "testuser"
+    assert data.coin_name == "Bit Coin"
+    assert data.coin_symbol == "BTC"
 
 
-def test_common_fields_username_strip():
-    data = CommonFieldsValidator(username="  user123  ")
-    assert data.username == "user123"
-
-
-def test_common_fields_coin_name_titlecase():
-    data = CommonFieldsValidator(name="  bit coin  ")
-    assert data.name == "Bit Coin"
-
-
-def test_common_fields_coin_symbol_uppercase():
-    data = CommonFieldsValidator(symbol=" btc ")
-    assert data.symbol == "BTC"
-
-
-def test_common_fields_coin_symbol_invalid():
-    with pytest.raises(ValueError):
-        CommonFieldsValidator(symbol="invalid symbol")
+def test_invalid_coin_symbol_raises_validation_error():
+    with pytest.raises(ValidationError):
+        CoinActionSchema(username="  TESTUSER   ", coin_name="bit COIN", coin_symbol="invalid symbol")
 
 
 ### Tests for `CoinOperationSchema`:
-def test_operation_valid_buy_and_price():
-    operation = CoinOperationSchema(buy=10, average_price=5)
+def test_valid_buy_operation_calculates_paid_correctly():
+    operation = TransactionOperationSchema(buy=10, average_price=5)
     assert operation.paid == 50
     assert operation.average_price == 5
 
 
-def test_operation_valid_sell_and_price():
-    operation = CoinOperationSchema(sell=10, average_price=5)
+def test_valid_buy_operation_with_paid_amount():
+    operation = TransactionOperationSchema(buy=10, paid=50)
     assert operation.paid == 50
     assert operation.average_price == 5
 
 
-def test_operation_valid_buy_and_paid():
-    operation = CoinOperationSchema(buy=10, paid=50)
-    assert operation.average_price == 5
+def test_valid_sell_operation_calculates_paid_correctly():
+    operation = TransactionOperationSchema(sell=10, average_price=5)
     assert operation.paid == 50
+    assert operation.average_price == 5
 
 
-def test_operation_missing_price_and_paid():
-    with pytest.raises(ValueError, match="Either 'paid' or 'average_price' must be provided."):
-        CoinOperationSchema(buy=10)
+def test_valid_sell_operation_with_paid_amount():
+    operation = TransactionOperationSchema(sell=10, paid=50)
+    assert operation.paid == 50
+    assert operation.average_price == 5
 
 
-def test_operation_both_price_and_paid():
-    with pytest.raises(ValueError, match="There must be only one of 'paid' or 'average_price' provided, not both."):
-        CoinOperationSchema(buy=10, paid=50, average_price=5)
+def test_missing_price_or_paid_raises_validation_error():
+    with pytest.raises(ValidationError, match="Either 'paid' or 'average_price' must be provided."):
+        TransactionOperationSchema(buy=10)
 
 
-def test_operation_invalid_buy_negative():
+def test_both_paid_and_average_price_raises_validation_error():
+    with pytest.raises(
+        ValidationError, match="There must be only one of 'paid' or 'average_price' provided, not both."
+    ):
+        TransactionOperationSchema(buy=10, paid=50, average_price=5)
+
+
+def test_negative_buy_value_raises_error():
     with pytest.raises(ValueError):
-        CoinOperationSchema(buy=-10, paid=50)
+        TransactionOperationSchema(buy=-10, paid=50)
 
 
-def test_operation_invalid_sell_negative():
+def test_negative_sell_value_raises_error():
     with pytest.raises(ValueError):
-        CoinOperationSchema(sell=-5, average_price=5)
+        TransactionOperationSchema(sell=-5, average_price=5)
 
 
-def test_operation_invalid_fee_negative():
+def test_negative_fee_value_raises_error():
     with pytest.raises(ValueError):
-        CoinOperationSchema(buy=10, fee=-0.1)
+        TransactionOperationSchema(buy=10, fee=-0.1)
 
 
 ### Tests for integration with `CoinInfoSchema`:
-def test_coin_info_schema_valid_data():
-    coin_info = CoinInfoSchema(username="TestUser", name="bitcoin", symbol="btc")
-    assert coin_info.username == "testuser"
-    assert coin_info.name == "Bitcoin"
-    assert coin_info.symbol == "BTC"
-
-
-def test_coin_info_schema_invalid_symbol():
-    with pytest.raises(ValueError):
-        CoinInfoSchema(symbol="bt c")
+def test_invalid_coin_symbol_raises_validation_error_in_coin_info():
+    with pytest.raises(ValidationError):
+        CoinActionSchema(username="  TESTUSER   ", coin_name="  bit COIN  ", coin_symbol="bt c")
 
 
 ### Tests for borderline cases:
-def test_operation_extreme_large_values():
-    operation = CoinOperationSchema(buy=1e9, average_price=1e9)
+def test_extreme_large_values_in_operation():
+    operation = TransactionOperationSchema(buy=1e9, average_price=1e9)
     assert operation.paid == 1e18
 
 
-def test_operation_zero_values():
+def test_zero_values_in_operation_raises_error():
     with pytest.raises(ValueError):
-        CoinOperationSchema(buy=0, sell=0, average_price=0)
+        TransactionOperationSchema(buy=0, sell=0, average_price=0)
 
 
-def test_operation_edge_case_buy_zero():
-    operation = CoinOperationSchema(buy=0, sell=10, average_price=5)
+def test_buy_zero_value_is_handled_correctly():
+    operation = TransactionOperationSchema(buy=0, sell=10, average_price=5)
     assert operation.paid == 50
     assert operation.average_price == 5
-
-
-### Tests on collections (eg `UserCoinsSchema`):
-def test_user_coins_schema_valid():
-    user_coins = UserCoinsSchema(
-        coins=[
-            CoinInfoSchema(username="testuser", name="bitcoin", symbol="btc"),
-            CoinInfoSchema(username="anotheruser", name="ethereum", symbol="eth"),
-        ]
-    )
-    assert len(user_coins.coins) == 2
-    assert user_coins.coins[0].symbol == "BTC"
-    assert user_coins.coins[1].symbol == "ETH"
-
-
-def test_user_coins_schema_invalid_coin_symbol():
-    with pytest.raises(ValueError):
-        UserCoinsSchema(coins=[CoinInfoSchema(username="user", name="bitcoin", symbol="bt c")])

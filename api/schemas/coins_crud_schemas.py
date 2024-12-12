@@ -2,44 +2,39 @@ from pydantic import BaseModel, field_validator, model_validator, Field
 from typing import List
 
 
-class CommonFieldsValidator(BaseModel):
-    username: str | None = None
-    name: str | None = None
-    symbol: str | None = None
+class CoinInfoSchema(BaseModel):
+    coin_name: str
+    coin_symbol: str
+
+
+class UserCoinsListSchema(BaseModel):
+    coins: List[CoinInfoSchema]
+
+
+class CoinActionSchema(BaseModel):
+    username: str
+    coin_name: str
+    coin_symbol: str
 
     @field_validator("username", mode="after")
     def validate_username(cls, value: str) -> str:
         """Validates the username according to specific rules."""
-        if value:
-            return value.strip().lower()
-        return value
+        return value.strip().lower()
 
-    @field_validator("name", mode="after")
+    @field_validator("coin_name", mode="after")
     def coin_name_validator(cls, value: str) -> str:
         """Validate coin name."""
-        if value:
-            return value.strip().title()
-        return value
+        return value.strip().title()
 
-    @field_validator("symbol", mode="after")
+    @field_validator("coin_symbol", mode="after")
     def coin_symbol_validator(cls, value: str) -> str:
         """Validate coin symbol."""
-        if value:
-            if len(value.split()) > 1:
-                raise ValueError("Invalid coin symbol")
-            return value.strip().upper()
-        return value
+        if len(value.split()) > 1:
+            raise ValueError("Invalid coin symbol")
+        return value.strip().upper()
 
 
-class CoinInfoSchema(CommonFieldsValidator):
-    pass
-
-
-class UserCoinsSchema(BaseModel):
-    coins: List[CoinInfoSchema]
-
-
-class CoinOperationSchema(BaseModel):
+class TransactionOperationSchema(BaseModel):
     buy: float = Field(ge=0, default=0.0)
     sell: float = Field(ge=0, default=0.0)
     paid: float = Field(ge=0, default=0.0)
@@ -79,5 +74,5 @@ class CoinOperationSchema(BaseModel):
 
 
 class TransactionSchema(BaseModel):
-    coin: CoinInfoSchema
-    operation: CoinOperationSchema
+    coin: CoinActionSchema
+    operation: TransactionOperationSchema
