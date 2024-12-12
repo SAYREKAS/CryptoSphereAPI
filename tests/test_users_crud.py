@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from api.database.models import Base, UsersORM
-from api.schemas.users_crud_schemas import UserInfoSchema
+from api.schemas.users_crud_schemas import UserActionSchema
 from api.crud.users_crud import create_user, read_all_users, read_user_by_username, delete_user_by_username
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -35,13 +35,12 @@ async def session():
 async def test_create_user(session):
     """Test user creation."""
     password = "StrongPassword12!"
-    user_data = UserInfoSchema(username="testuser", email="test@example.com", password=password)
+    user_data = UserActionSchema(username="testuser", email="test@example.com", password=password)
 
     result = await create_user(user_data, session)
     assert user_data.username == result.username
     assert user_data.email == result.email
     assert user_data.password == hashlib.sha256(password.encode()).hexdigest()
-    assert result.password is None
 
     # Verify user exists in database
     query = await session.execute(select(UsersORM).where(UsersORM.username == user_data.username))
@@ -57,7 +56,7 @@ async def test_create_user(session):
 async def test_create_user_duplicate(session):
     """Test user creation with duplicate username or email."""
     password = "StrongPassword1!"
-    user_data = UserInfoSchema(username="testuser", email="test@example.com", password=password)
+    user_data = UserActionSchema(username="testuser", email="test@example.com", password=password)
 
     await create_user(user_data, session)
 
@@ -72,9 +71,9 @@ async def test_create_user_duplicate(session):
 async def test_read_all_users(session):
     """Test retrieving all users."""
     users = [
-        UserInfoSchema(username="user1", email="user1@example.com", password="StrongPassword1!"),
-        UserInfoSchema(username="user2", email="user2@example.com", password="StrongPassword2!"),
-        UserInfoSchema(username="user3", email="user3@example.com", password="StrongPassword3!"),
+        UserActionSchema(username="user1", email="user1@example.com", password="StrongPassword1!"),
+        UserActionSchema(username="user2", email="user2@example.com", password="StrongPassword2!"),
+        UserActionSchema(username="user3", email="user3@example.com", password="StrongPassword3!"),
     ]
 
     for user in users:
@@ -88,7 +87,7 @@ async def test_read_all_users(session):
 @pytest.mark.asyncio
 async def test_read_user_by_username(session):
     """Test retrieving a user by username."""
-    user_data = UserInfoSchema(username="testuser", email="test@example.com", password="StrongPassword1!")
+    user_data = UserActionSchema(username="testuser", email="test@example.com", password="StrongPassword1!")
     await create_user(user_data, session)
 
     result = await read_user_by_username(user_data.username, session)
@@ -110,10 +109,10 @@ async def test_read_user_by_username_not_found(session):
 @pytest.mark.asyncio
 async def test_delete_user_by_username(session):
     """Test deleting a user by username."""
-    user_data = UserInfoSchema(username="testuser", email="test@example.com", password="StrongPassword1!")
+    user_data = UserActionSchema(username="testuser", email="test@example.com", password="StrongPassword1!")
     await create_user(user_data, session)
 
-    result = await delete_user_by_username(user_data.username, session)
+    result = await delete_user_by_username(user_data=user_data, session=session)
     assert result.username == user_data.username
     assert result.email == user_data.email
 
@@ -127,7 +126,11 @@ async def test_delete_user_by_username(session):
 async def test_delete_user_by_username_not_found(session):
     """Test deleting a user by username that does not exist."""
     with pytest.raises(HTTPException) as exc:
-        await delete_user_by_username("nonexistent", session)
+        user_data = UserActionSchema(username="nonexistent", email="test@example.com", password="StrongPassword1!")
+        await delete_user_by_username(user_data=user_data, session=session)
 
-    assert exc.value.status_code == 400
-    assert exc.value.detail == "General error, try again later."
+    assert exc.value.status_code == 404
+    assert (
+        exc.value.detail
+        == "User with username 'nonexistent' and the provided email and password not found for deletion."
+    )

@@ -3,7 +3,7 @@ import hashlib
 import pytest
 from pydantic import ValidationError
 
-from api.schemas.users_crud_schemas import CommonFieldsValidator, UserInfoSchema, AllUsersSchema, reserved_names
+from api.schemas.users_crud_schemas import AllUsersSchema, reserved_names, UserActionSchema
 
 
 # Test username validation
@@ -15,7 +15,7 @@ def test_valid_username():
         "username123",
     ]
     for username in valid_usernames:
-        user = CommonFieldsValidator(username=username, email="test@example.com", password="Valid123!")
+        user = UserActionSchema(username=username, email="test@example.com", password="Valid123!")
         assert user.username == username.lower()
 
 
@@ -30,13 +30,13 @@ def test_invalid_username_special_chars():
     for username in invalid_usernames:
         print(username)
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username=username, email="test@example.com", password="Valid123!")
+            UserActionSchema(username=username, email="test@example.com", password="Valid123!")
 
 
 def test_reserved_username():
     for username in reserved_names:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username=username, email="test@example.com", password="Valid123!")
+            UserActionSchema(username=username, email="test@example.com", password="Valid123!")
 
 
 # Test password validation
@@ -48,7 +48,7 @@ def test_valid_password():
         "Val1dP@ssw0rd",
     ]
     for password in valid_passwords:
-        user = CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+        user = UserActionSchema(username="valid_user", email="test@example.com", password=password)
         assert user.password == hashlib.sha256(password.encode()).hexdigest()
 
 
@@ -56,7 +56,7 @@ def test_invalid_password_length():
     invalid_passwords = ["s" * 5, "l" * 100]
     for password in invalid_passwords:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+            UserActionSchema(username="valid_user", email="test@example.com", password=password)
 
 
 def test_invalid_password_missing_uppercase():
@@ -66,7 +66,7 @@ def test_invalid_password_missing_uppercase():
     ]
     for password in invalid_passwords:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+            UserActionSchema(username="valid_user", email="test@example.com", password=password)
 
 
 def test_invalid_password_missing_lowercase():
@@ -76,7 +76,7 @@ def test_invalid_password_missing_lowercase():
     ]
     for password in invalid_passwords:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+            UserActionSchema(username="valid_user", email="test@example.com", password=password)
 
 
 def test_invalid_password_missing_digit():
@@ -86,7 +86,7 @@ def test_invalid_password_missing_digit():
     ]
     for password in invalid_passwords:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+            UserActionSchema(username="valid_user", email="test@example.com", password=password)
 
 
 def test_invalid_password_missing_special_char():
@@ -96,7 +96,7 @@ def test_invalid_password_missing_special_char():
     ]
     for password in invalid_passwords:
         with pytest.raises(ValidationError):
-            CommonFieldsValidator(username="valid_user", email="test@example.com", password=password)
+            UserActionSchema(username="valid_user", email="test@example.com", password=password)
 
 
 # Test AllUsersSchema validation
@@ -110,18 +110,18 @@ def test_all_users_schema():
         AllUsersSchema(users=invalid_users)
 
 
-# Test UserInfoSchema (inherits CommonFieldsValidator)
+# Test UserInfoSchema (inherits UserActionSchema)
 def test_user_info_schema():
-    valid_user = UserInfoSchema(username="validuser", email="test@example.com", password="Valid123!")
+    valid_user = UserActionSchema(username="validuser", email="test@example.com", password="Valid123!")
     assert valid_user.username == "validuser"
     assert valid_user.email == "test@example.com"
     assert valid_user.password == hashlib.sha256("Valid123!".encode()).hexdigest()
 
     with pytest.raises(ValidationError):
-        UserInfoSchema(username="inv@lid", email="test@example.com", password="Valid123!")
+        UserActionSchema(username="inv@lid", email="test@example.com", password="Valid123!")
 
     with pytest.raises(ValidationError):
-        UserInfoSchema(username="validuser", email="invalid-email", password="Valid123!")
+        UserActionSchema(username="validuser", email="invalid-email", password="Valid123!")
 
     with pytest.raises(ValidationError):
-        UserInfoSchema(username="validuser", email="test@example.com", password="short")
+        UserActionSchema(username="validuser", email="test@example.com", password="short")

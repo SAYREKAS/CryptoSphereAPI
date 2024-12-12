@@ -1,14 +1,15 @@
 import re
 import hashlib
+from datetime import datetime
 from typing import Sequence
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 reserved_names = {"admin", "root", "support", "help"}
 
 
-class CommonFieldsValidator(BaseModel):
-    username: str = Field(min_length=3, max_length=30)
+class UserActionSchema(BaseModel):
+    username: str
     email: EmailStr
     password: str | None = None
 
@@ -53,9 +54,24 @@ class CommonFieldsValidator(BaseModel):
         return value
 
 
+class DeleteUserSchema(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+
+class UserInfoSchema(BaseModel):
+    username: str
+    email: EmailStr
+
+
+class FullUserInfoSchema(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    hash_password: str
+    registered_at: datetime
+
+
 class AllUsersSchema(BaseModel):
     users: Sequence[str]
-
-
-class UserInfoSchema(CommonFieldsValidator):
-    pass
