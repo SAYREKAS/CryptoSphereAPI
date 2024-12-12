@@ -7,10 +7,10 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM, CoinsORM
-from api.schemas.crud_coins_schemas import UserCoinActionSchema, CoinInfoSchema, UserCoinsSchema
+from api.schemas.coins_crud_schemas import CoinInfoSchema, UserCoinsSchema
 
 
-async def add_coin_for_user(coin_data: UserCoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
+async def add_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) -> CoinInfoSchema:
     """Add a new coin for a user identified by a username."""
 
     try:
@@ -73,7 +73,7 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
         )
 
 
-async def delete_coin_for_user(coin_data: UserCoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
+async def delete_coin_for_user(coin_data: CoinInfoSchema, session: AsyncSession) -> CoinInfoSchema:
     """Remove a user's coin from the database."""
 
     try:

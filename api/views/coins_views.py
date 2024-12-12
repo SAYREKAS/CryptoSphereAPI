@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.db_helper import db_helper
-from api.schemas.crud_coins_schemas import UserCoinActionSchema, CoinInfoSchema, UserCoinsSchema
+from api.schemas.coins_crud_schemas import CoinInfoSchema, CoinInfoSchema, UserCoinsSchema
 from api.crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=CoinInfoSchema)
 async def add_coin_for_user_endpoint(
-    coin_data: UserCoinActionSchema,
+    coin_data: CoinInfoSchema,
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> CoinInfoSchema:
     """Endpoint for adding a new user's coin"""
@@ -30,7 +30,7 @@ async def get_all_coins_for_user_endpoint(
 
 @router.delete("/", status_code=status.HTTP_200_OK, response_model=CoinInfoSchema)
 async def delete_coin_for_user_endpoint(
-    coin_data: UserCoinActionSchema,
+    coin_data: CoinInfoSchema,
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> CoinInfoSchema:
     """Endpoint for deleting a user's coin"""

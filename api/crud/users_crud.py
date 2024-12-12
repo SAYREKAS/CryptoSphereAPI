@@ -8,10 +8,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM
-from api.schemas.crud_users_schemas import UserInfoSchema, NewUserSchema, AllUsersSchema
+from api.schemas.users_crud_schemas import UserInfoSchema, AllUsersSchema
 
 
-async def create_user(user_data: NewUserSchema, session: AsyncSession) -> UserInfoSchema:
+async def create_user(user_data: UserInfoSchema, session: AsyncSession) -> UserInfoSchema:
     """Add a new user to the database."""
 
     try:

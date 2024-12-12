@@ -3,8 +3,8 @@
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud.users_crud import create_user, read_all_users, delete_user_by_username, read_user_by_username
-from api.schemas.crud_users_schemas import AllUsersSchema, NewUserSchema, UserInfoSchema
+from api.crud.users_crud import create_user, read_all_users, delete_user_by_username, read_user_by_username
+from api.schemas.users_crud_schemas import AllUsersSchema, UserInfoSchema, UserInfoSchema
 from api.database.db_helper import db_helper
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserInfoSchema)
 async def create_user_endpoint(
-    user_data: NewUserSchema,
+    user_data: UserInfoSchema,
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> UserInfoSchema:
     """Endpoint to add a new user to the database."""
