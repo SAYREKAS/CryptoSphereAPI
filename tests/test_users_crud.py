@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from api.database.models import UsersORM
 from api.schemas.users_crud_schemas import UserActionSchema
 from api.crud.users_crud import create_user, read_all_users, read_user_by_username, delete_user_by_username
-from tests.async_session_fixture import session
+from tests.fixtures import session
 
 
 @pytest.mark.asyncio

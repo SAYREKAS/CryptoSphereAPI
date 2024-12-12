@@ -19,7 +19,6 @@ async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) 
 
         user_id = query.scalar_one_or_none()
         if not user_id:
-            logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User '{coin_data.username}' not found.")
 
         new_coin = CoinsORM(user_id=user_id, name=coin_data.coin_name, symbol=coin_data.coin_symbol)
@@ -27,16 +26,17 @@ async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) 
         await session.commit()
 
         logger.info(f"Coin '{new_coin.name}' ({new_coin.symbol}) successfully added for user '{coin_data.username}'.")
-        return CoinInfoSchema(
-            coin_name=new_coin.name,
-            coin_symbol=new_coin.symbol,
-        )
+        return CoinInfoSchema(coin_name=new_coin.name, coin_symbol=new_coin.symbol)
 
     except sqlalchemy.exc.IntegrityError as e:
         logger.warning(
             f"Integrity error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
         )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coin data is invalid or already exists.")
+
+    except HTTPException:
+        logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
+        raise
 
     except Exception as e:
         logger.error(f"Unexpected error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}")
@@ -112,6 +112,8 @@ async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSessio
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {str(e)}",
         )
+    except HTTPException:
+        raise
 
     except Exception as e:
         logger.error(
