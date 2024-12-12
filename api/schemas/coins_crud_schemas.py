@@ -4,8 +4,8 @@ from typing import List
 
 class CommonFieldsValidator(BaseModel):
     username: str | None = None
-    coin_name: str | None = None
-    coin_symbol: str | None = None
+    name: str | None = None
+    symbol: str | None = None
 
     @field_validator("username", mode="after")
     def validate_username(cls, value: str) -> str:
@@ -14,14 +14,14 @@ class CommonFieldsValidator(BaseModel):
             return value.strip().lower()
         return value
 
-    @field_validator("coin_name", mode="after")
+    @field_validator("name", mode="after")
     def coin_name_validator(cls, value: str) -> str:
         """Validate coin name."""
         if value:
             return value.strip().title()
         return value
 
-    @field_validator("coin_symbol", mode="after")
+    @field_validator("symbol", mode="after")
     def coin_symbol_validator(cls, value: str) -> str:
         """Validate coin symbol."""
         if value:
@@ -76,3 +76,8 @@ class CoinOperationSchema(BaseModel):
         # Update values
         values.paid, values.average_price = paid, average_price
         return values
+
+
+class TransactionSchema(BaseModel):
+    coin: CoinInfoSchema
+    operation: CoinOperationSchema
