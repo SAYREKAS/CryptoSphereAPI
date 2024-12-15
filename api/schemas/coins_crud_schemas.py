@@ -5,7 +5,7 @@ __all__ = [
     "OperationSchema",
 ]
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator, Field
 
 
 class UsernameFieldValidator(BaseModel):
@@ -51,48 +51,45 @@ class CoinInfoFieldsValidator(BaseModel):
 
 
 class OperationFieldsValidator(BaseModel):
-    buy: float = 0.0
-    sell: float = 0.0
-    paid: float = 0.0
-    average_price: float = 0.0
-    fee: float = 0.0
+    buy: float = Field(ge=0, default=0)
+    sell: float = Field(ge=0, default=0)
+    paid: float = Field(ge=0, default=0)
+    average_price: float = Field(ge=0, default=0)
+    fee: float = Field(ge=0, default=0)
 
     @model_validator(mode="after")
     def validate_paid_or_average_price(cls, values) -> dict:
-        """Validates and calculates missing values for paid and average_price based on buy and sell."""
+        """Validates and calculates missing values."""
 
-        buy, sell, paid, average_price, fee = values.buy, values.sell, values.paid, values.average_price, values.fee
+        buy, sell, paid, average_price, fee = (values.buy, values.sell, values.paid, values.average_price, values.fee)
 
-        if buy <= 0 and sell <= 0:
-            raise ValueError("Cannot calculate missing data. Both 'buy' and 'sell' are zero or negative.")
+        if buy > 0 and sell > 0:
+            raise ValueError("Only one of 'buy' or 'sell' can be greater than zero.")
 
-        if paid > 0 and average_price > 0:
-            raise ValueError("There must be only one of 'paid' or 'average_price' provided, not both.")
+        if buy == 0 and sell == 0:
+            raise ValueError("Either 'buy' or 'sell' must be greater than zero.")
 
         if paid == 0 and average_price == 0:
-            raise ValueError("Either 'paid' or 'average_price' must be provided.")
+            if fee == 0 and (buy > 0 or sell > 0):
+                return values
+            raise ValueError("Either 'paid' or 'average_price' must be set unless the transaction is free (fee=0).")
 
-        if fee < 0:
-            raise ValueError("Fee must be greater than or equal to 0.")
+        if paid > 0 and average_price > 0:
+            raise ValueError("Both 'paid' and 'average_price' cannot be set at the same time.")
 
-        # Calculate missing fields
         if paid == 0 and average_price > 0:
-            paid = (buy or sell) * average_price
+            total_units = buy if buy > 0 else sell
+            paid = total_units * average_price - fee
+
+            if paid < 0:
+                paid = 0
 
         elif average_price == 0 and paid > 0:
-            average_price = paid / (buy or sell)
+            total_units = buy if buy > 0 else sell
+            if total_units == 0:
+                raise ValueError("Cannot calculate 'average_price' with zero units (buy or sell).")
+            average_price = (paid + fee) / total_units
 
-        # Final validation
-        if paid == 0 or average_price == 0:
-            raise ValueError(
-                f"Cannot calculate missing data. Invalid values: "
-                f"buy={buy}, sell={sell}, paid={paid}, average_price={average_price}."
-            )
-
-        if fee > 0:
-            paid = paid + fee
-
-        # Update values
         values.paid, values.average_price = paid, average_price
         return values
 
