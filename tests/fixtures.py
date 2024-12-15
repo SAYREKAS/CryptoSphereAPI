@@ -27,7 +27,7 @@ async def session():
 
 
 @pytest_asyncio.fixture
-async def new_user(session):
+async def new_test_user(session):
     """Create a new test user for testing."""
 
     from api.crud.users_crud import create_user
