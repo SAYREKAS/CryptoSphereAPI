@@ -1,7 +1,14 @@
+__all__ = [
+    "CoinInfoSchema",
+    "UserCoinsListSchema",
+    "CoinActionSchema",
+    "OperationSchema",
+]
+
 from pydantic import BaseModel, field_validator, model_validator
 
 
-class UsernameField(BaseModel):
+class UsernameFieldValidator(BaseModel):
     username: str
 
     @field_validator("username", mode="after")
@@ -15,7 +22,7 @@ class UsernameField(BaseModel):
         return value
 
 
-class CoinInfoFields(BaseModel):
+class CoinInfoFieldsValidator(BaseModel):
     coin_name: str
     coin_symbol: str
 
@@ -43,19 +50,7 @@ class CoinInfoFields(BaseModel):
         return value
 
 
-class CoinInfoSchema(CoinInfoFields):
-    pass
-
-
-class UserCoinsListSchema(BaseModel):
-    coins: list[CoinInfoSchema]
-
-
-class CoinActionSchema(UsernameField, CoinInfoFields):
-    pass
-
-
-class OperationSchema(CoinActionSchema):
+class OperationFieldsValidator(BaseModel):
     buy: float = 0.0
     sell: float = 0.0
     paid: float = 0.0
@@ -100,3 +95,19 @@ class OperationSchema(CoinActionSchema):
         # Update values
         values.paid, values.average_price = paid, average_price
         return values
+
+
+class CoinInfoSchema(CoinInfoFieldsValidator):
+    pass
+
+
+class UserCoinsListSchema(BaseModel):
+    coins: list[CoinInfoSchema]
+
+
+class CoinActionSchema(UsernameFieldValidator, CoinInfoFieldsValidator):
+    pass
+
+
+class OperationSchema(CoinActionSchema, OperationFieldsValidator):
+    pass
