@@ -1,7 +1,6 @@
 import re
 import hashlib
 from datetime import datetime
-from typing import Sequence
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -68,4 +67,4 @@ class FullUserInfoSchema(BaseModel):
 
 
 class AllUsersSchema(BaseModel):
-    users: Sequence[str]
+    users: list[str]
