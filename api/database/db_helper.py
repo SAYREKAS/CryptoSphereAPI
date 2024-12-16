@@ -1,7 +1,12 @@
+"""
+Database helper module for managing asynchronous database connections and sessions.
+"""
+
 from typing import AsyncGenerator
 
-from api.config import settings
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+from api.config import settings
 
 
 class DatabaseHelper:
@@ -28,7 +33,7 @@ class DatabaseHelper:
         await self.engine.dispose()
 
     async def session_getter(self) -> AsyncGenerator[AsyncSession, None]:
-        """Provide an async session generator."""
+        """Give an async session generator."""
         async with self.async_session_factory() as session:
             yield session
 
