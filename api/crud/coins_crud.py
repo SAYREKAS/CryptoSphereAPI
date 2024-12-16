@@ -9,10 +9,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM, CoinsORM
-from api.schemas.coins_crud_schemas import CoinActionSchema, UserCoinsListSchema, CoinInfoSchema
+from api.schemas.coins_crud_schemas import CoinActionSchema, UserCoinsResponseSchema, CoinInfoResponseSchema
 
 
-async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
+async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoResponseSchema:
     """Add a new coin for a user identified by a username."""
 
     try:
@@ -32,7 +32,7 @@ async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) 
         logger.info(
             f"Coin '{new_coin.name}' ({new_coin.symbol}) successfully added for user '{coin_data.username}'.",
         )
-        return CoinInfoSchema(
+        return CoinInfoResponseSchema(
             coin_name=new_coin.name,
             coin_symbol=new_coin.symbol,
         )
@@ -58,7 +58,7 @@ async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) 
         )
 
 
-async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCoinsListSchema:
+async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCoinsResponseSchema:
     """Retrieve all coins for a user identified by a username."""
 
     try:
@@ -69,11 +69,11 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
         all_coins = coins_query.scalars().all()
         if not all_coins:
             logger.warning(f"Attempted to get all coins for user '{username}', but no coins were found.")
-            return UserCoinsListSchema(coins=[])
+            return UserCoinsResponseSchema(coins=[])
 
         logger.info(f"Retrieved {len(all_coins)} coins for user '{username}'.")
-        return UserCoinsListSchema(
-            coins=[CoinInfoSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins]
+        return UserCoinsResponseSchema(
+            coins=[CoinInfoResponseSchema(coin_name=coin.name, coin_symbol=coin.symbol) for coin in all_coins]
         )
 
     except Exception as e:
@@ -84,7 +84,7 @@ async def get_all_coins_for_user(username: str, session: AsyncSession) -> UserCo
         )
 
 
-async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoSchema:
+async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) -> CoinInfoResponseSchema:
     """Remove a user's coin from the database."""
 
     try:
@@ -111,7 +111,7 @@ async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSessio
         logger.info(
             f"Coin '{coin_data.coin_name}' ({coin_data.coin_symbol}) successfully deleted for user '{coin_data.username}'."
         )
-        return CoinInfoSchema(
+        return CoinInfoResponseSchema(
             coin_name=coin_data.coin_name,
             coin_symbol=coin_data.coin_symbol,
         )
