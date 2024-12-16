@@ -1,10 +1,11 @@
-"""CRUD database operations"""
+"""
+Module for managing user coin data: adding, retrieving, and deleting user coins.
+"""
 
-import sqlalchemy
 from loguru import logger
-from fastapi import HTTPException, status
-
 from sqlalchemy import select, delete
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database.models import UsersORM, CoinsORM
@@ -19,20 +20,31 @@ async def add_coin_for_user(coin_data: CoinActionSchema, session: AsyncSession) 
 
         user_id = query.scalar_one_or_none()
         if not user_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User '{coin_data.username}' not found.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User '{coin_data.username}' not found.",
+            )
 
         new_coin = CoinsORM(user_id=user_id, name=coin_data.coin_name, symbol=coin_data.coin_symbol)
         session.add(new_coin)
         await session.commit()
 
-        logger.info(f"Coin '{new_coin.name}' ({new_coin.symbol}) successfully added for user '{coin_data.username}'.")
-        return CoinInfoSchema(coin_name=new_coin.name, coin_symbol=new_coin.symbol)
+        logger.info(
+            f"Coin '{new_coin.name}' ({new_coin.symbol}) successfully added for user '{coin_data.username}'.",
+        )
+        return CoinInfoSchema(
+            coin_name=new_coin.name,
+            coin_symbol=new_coin.symbol,
+        )
 
-    except sqlalchemy.exc.IntegrityError as e:
+    except IntegrityError as e:
         logger.warning(
             f"Integrity error while adding coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
         )
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coin data is invalid or already exists.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Coin data is invalid or already exists.",
+        )
 
     except HTTPException:
         logger.warning(f"Attempted to add a coin for non-existent user '{coin_data.username}'.")
@@ -104,7 +116,7 @@ async def delete_coin_for_user(coin_data: CoinActionSchema, session: AsyncSessio
             coin_symbol=coin_data.coin_symbol,
         )
 
-    except sqlalchemy.exc.IntegrityError as e:
+    except IntegrityError as e:
         logger.error(
             f"Integrity error while deleting coin '{coin_data.coin_name}' for user '{coin_data.username}': {e}"
         )
