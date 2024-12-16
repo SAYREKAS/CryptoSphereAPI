@@ -4,10 +4,10 @@ import pytest
 from sqlalchemy import select
 from fastapi import HTTPException
 
+from tests.fixtures import session
 from api.database.models import UsersORM
 from api.schemas import UserActionSchema
 from api.crud.users_crud import create_user, read_all_users, read_user_by_username, delete_user_by_username
-from tests.fixtures import session
 
 
 @pytest.mark.asyncio
@@ -60,7 +60,10 @@ async def test_read_all_users(session):
 
     result = await read_all_users(session)
     assert len(result.users) == len(users)
-    assert set(result.users) == {"user1", "user2", "user3"}
+    assert [user.id for user in result.users] == [1, 2, 3]
+    assert [user.id for user in result.users] != [2, 3, 4]
+    assert [user.username for user in result.users] == ["user1", "user2", "user3"]
+    assert [user.email for user in result.users] == ["user1@example.com", "user2@example.com", "user3@example.com"]
 
 
 @pytest.mark.asyncio

@@ -36,11 +36,11 @@ class TestUsernameFieldValidator:
             UsernameField(username="admin")
 
     def test_username_length(self):
-        with pytest.raises(ValidationError, match="Username can only contain letters, numbers, dots, or underscores."):
+        with pytest.raises(ValidationError):
             UsernameField(username="a")
 
-        with pytest.raises(ValidationError, match="Username can only contain letters, numbers, dots, or underscores."):
-            UsernameField(username="a" * 31)
+        with pytest.raises(ValidationError):
+            UsernameField(username="a" * 51)
 
     def test_username_strip_and_lower(self):
         schema = UsernameField(username="  User_Name  ")

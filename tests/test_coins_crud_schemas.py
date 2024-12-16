@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from api.schemas import OperationSchema, CoinActionSchema, UserCoinsListSchema, CoinInfoSchema
+
 from api.schemas.coins_crud_schemas import UsernameFieldValidator, CoinInfoFieldsValidator, OperationFieldsValidator
 
 

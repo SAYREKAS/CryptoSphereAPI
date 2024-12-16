@@ -2,7 +2,7 @@ import pytest
 from fastapi import HTTPException, status
 
 from tests.fixtures import session, new_test_user
-from api.schemas import CoinActionSchema, UserCoinsListSchema
+from api.schemas import CoinActionSchema, UserCoinsResponseSchema
 from api.crud.coins_crud import add_coin_for_user, get_all_coins_for_user, delete_coin_for_user
 
 
@@ -53,7 +53,7 @@ async def test_get_all_coins_for_user_success(new_test_user, session):
 
     result = await get_all_coins_for_user(username=new_test_user.username, session=session)
 
-    assert isinstance(result, UserCoinsListSchema)
+    assert isinstance(result, UserCoinsResponseSchema)
     assert len(result.coins) == 2
 
     assert result.coins[0].coin_name == "Bitcoin"
@@ -68,7 +68,7 @@ async def test_get_all_coins_for_user_no_coins(new_test_user, session):
 
     result = await get_all_coins_for_user(username=new_test_user.username, session=session)
 
-    assert isinstance(result, UserCoinsListSchema)
+    assert isinstance(result, UserCoinsResponseSchema)
     assert len(result.coins) == 0
 
 
@@ -76,7 +76,7 @@ async def test_get_all_coins_for_user_no_coins(new_test_user, session):
 async def test_get_all_coins_for_user_user_not_found(new_test_user, session):
     result = await get_all_coins_for_user("nonexistentuser", session)
 
-    assert isinstance(result, UserCoinsListSchema)
+    assert isinstance(result, UserCoinsResponseSchema)
     assert len(result.coins) == 0
 
 
