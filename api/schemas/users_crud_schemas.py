@@ -1,22 +1,31 @@
+"""
+Module containing Pydantic schemas for user validation and response handling.
+"""
+
 __all__ = [
     "reserved_names",
     "UserActionSchema",
-    "UserInfoSchema",
-    "FullUserInfoSchema",
-    "AllUsersSchema",
+    "UserInfoResponseSchema",
+    "UserInfoResponseSchema",
+    "AllUsersResponseSchema",
 ]
 
 import re
 import hashlib
+from typing import Sequence
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 
 reserved_names = {"admin", "root", "support", "help"}
 
 
-class UsernameFieldValidator(BaseModel):
-    username: str
+class IdField(BaseModel):
+    id: int = Field(ge=1)
+
+
+class UsernameField(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
 
     @field_validator("username", mode="after")
     def validate_username(cls, value: str) -> str:
@@ -24,11 +33,11 @@ class UsernameFieldValidator(BaseModel):
 
         value = value.strip().lower()
 
-        if not re.fullmatch(r"^[a-zA-Z0-9._]{3,30}$", value):
-            raise ValueError("Username can only contain letters, numbers, dots, or underscores.")
+        if not re.fullmatch(r"^[a-zA-Z0-9._]+$", value):
+            raise ValueError("Username can only contain letters, numbers, dots or underscores.")
 
         if value.startswith((".", "_")) or value.endswith((".", "_")):
-            raise ValueError("Username cannot start or end with a dot or underscore.")
+            raise ValueError("Username can't start or end with a dot or underscore.")
 
         if value in reserved_names:
             raise ValueError("This username is reserved.")
@@ -36,7 +45,7 @@ class UsernameFieldValidator(BaseModel):
         return value
 
 
-class EmailFieldValidator(BaseModel):
+class EmailField(BaseModel):
     email: EmailStr
 
     @field_validator("email", mode="after")
@@ -45,7 +54,7 @@ class EmailFieldValidator(BaseModel):
         return value.strip().lower()
 
 
-class PasswordFieldValidator(BaseModel):
+class PasswordField(BaseModel):
     password: str
 
     @field_validator("password", mode="after")
@@ -53,7 +62,7 @@ class PasswordFieldValidator(BaseModel):
         """Validates and hashes the password"""
 
         if not 8 < len(value) < 64:
-            raise ValueError("Password must be at least 8 characters long.")
+            raise ValueError("Password must be at least eight characters long.")
 
         if not re.search(r"[A-Z]", value):
             raise ValueError("Password must contain at least one uppercase letter.")
@@ -70,19 +79,24 @@ class PasswordFieldValidator(BaseModel):
         return hashlib.sha256(value.encode()).hexdigest()
 
 
-class UserActionSchema(UsernameFieldValidator, EmailFieldValidator, PasswordFieldValidator):
-    pass
-
-
-class UserInfoSchema(UsernameFieldValidator, EmailFieldValidator):
-    pass
-
-
-class FullUserInfoSchema(UsernameFieldValidator, EmailFieldValidator):
-    id: int
-    hash_password: str
+class RegisteredAtField(BaseModel):
     registered_at: datetime
 
 
-class AllUsersSchema(BaseModel):
-    users: list[str]
+class UserActionSchema(
+    UsernameField,
+    EmailField,
+    PasswordField,
+): ...
+
+
+class UserInfoResponseSchema(
+    IdField,
+    UsernameField,
+    EmailField,
+    RegisteredAtField,
+): ...
+
+
+class AllUsersResponseSchema(BaseModel):
+    users: Sequence[UserInfoResponseSchema] | list[UserInfoResponseSchema]
