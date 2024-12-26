@@ -77,4 +77,4 @@ class CoinStatisticsORM(Base):
 
     updated_at: Mapped[datetime] = mapped_column(nullable=False, default=func.now(), onupdate=func.now())
 
-    __table_args__ = UniqueConstraint("user_id", "coin_id", name="uix_user_id_coin_id")
+    __table_args__ = (UniqueConstraint("user_id", "coin_id", name="uix_user_id_coin_id"),)
