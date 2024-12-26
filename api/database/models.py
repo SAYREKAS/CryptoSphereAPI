@@ -63,16 +63,18 @@ class CoinStatisticsORM(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey(UsersORM.id, ondelete="CASCADE"), nullable=False, index=True)
     coin_id: Mapped[int] = mapped_column(ForeignKey(CoinsORM.id, ondelete="CASCADE"), nullable=False, index=True)
 
-    total_buy: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    total_invested: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    total_invested_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    buy_total: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    invested_total: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    invested_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
 
-    total_sell: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    total_realized: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    total_realized_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    sell_total: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    realized_total: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    realized_avg: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
 
     holdings: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    total_fee: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
-    transaction_count: Mapped[int] = mapped_column(nullable=False, default=0)
+    fee_total: Mapped[float] = mapped_column(CUSTOM_NUMERIC, nullable=False, default=0)
+    transactions_count: Mapped[int] = mapped_column(nullable=False, default=0)
 
-    last_updated: Mapped[datetime] = mapped_column(nullable=False, default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(nullable=False, default=func.now(), onupdate=func.now())
+
+    __table_args__ = UniqueConstraint("user_id", "coin_id", name="uix_user_id_coin_id")
